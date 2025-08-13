@@ -1,0 +1,46 @@
+<div [align]="'center'" class="summary-container">
+    <!-- Logo -->
+  <div class="p-text-center">
+    <img src="assets/SarAIh_Maas_V2.png" alt="Sarah Maas" width="300">
+    <h5>SarAIh Maas can give you detailed analysis on the Crescent City series of Sarah Maas Books</h5>
+  </div>
+
+  <!-- Chapter selection -->
+  <div [align]="'center'" class="chapter-selection" >
+    
+      <!-- Book selection -->
+    <p-select 
+        [options]="books" 
+        [(ngModel)]="selectedBook"
+        placeholder="Select a Book"
+        (onChange)="onBookChange()">
+    </p-select>
+    <br><br>
+    <p-select *ngIf="selectedBook"
+        [options]="chapters" 
+        [(ngModel)]="selectedChapter"
+        placeholder="Select a Chapter"
+        >
+    </p-select> 
+  </div>
+  
+  <!-- Summary options -->
+  <div *ngIf="selectedChapter">
+    <h4>🧪 Deep Analysis Summaries</h4>
+    <div *ngFor="let opt of summaryOptions">
+      <p-radiobutton 
+        name="summary" 
+        value="opt" 
+        [(ngModel)]="selectedSummary">
+      </p-radiobutton>
+    </div>
+  </div>
+
+  <!-- Generate Summary Button -->
+  <p-button 
+    label="Generate Summary" 
+    icon="pi pi-send" 
+    (onClick)="generateSummary()" 
+    *ngIf="selectedSummary">
+  </p-button>
+</div>
