@@ -8,6 +8,7 @@ import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
 import { TextareaModule } from 'primeng/textarea';
 import { CommonModule } from '@angular/common';
+import { RadioButtonClickEvent, RadioButtonModule } from 'primeng/radiobutton';
 
 @Component({
   selector: 'app-summary',
@@ -19,7 +20,8 @@ import { CommonModule } from '@angular/common';
     SelectModule,
     CommonModule,
     // CardModule,
-    TextareaModule
+    TextareaModule,
+    RadioButtonModule,  // Import RadioButtonModule
     // PanelModule
   ],
   templateUrl: './summary.component.html',
@@ -28,34 +30,64 @@ import { CommonModule } from '@angular/common';
 export class SummaryComponent {
   books = [
     { label: 'Select a Book', value: null },
-    { label: 'Crescent City - House of Earth and Blood', value: 'book1' },
-    { label: 'Crescent City - House of Sky and Breath', value: 'book2' },
-    { label: 'Crescent City - House of Flame and Shadow', value: 'book3' }
+    { label: 'Crescent City - House of Earth and Blood', value: 'Crescent-City-Book-1' },
+    { label: 'Crescent City - House of Sky and Breath', value: 'Crescent-City-Book-2' },
+    { label: 'Crescent City - House of Flame and Shadow', value: 'Crescent-City-Book-3' }
   ];
 
   chapters: any[] = [];
   selectedBook: string | null = null;
   selectedChapter: string | null = null;
-
-  summaryOptions = [
-    "Summary 1 - Summarize entire chapter using regular ChatGPT",
-    "Summary 2 - Summarize chapter part by part and merge",
-    "Summary 3 - Merge Summary 1 and Summary 2 using regular ChatGPT"
-  ];
+  summaryoption: string = '';    
 
   selectedSummary: string | null = null;
 
   constructor(private http: HttpClient) {}
 
   onBookChange() {
-    if (this.selectedBook === 'book1') {
-      this.chapters = [
-        { label: 'Select a Chapter', value: null },
-        { label: 'Chapter 1', value: 'Chapter 1' },
-        { label: 'Chapter 2', value: 'Chapter 2' }
-      ];
+    if (this.selectedBook !== null) {
+      this.fetchChapterNames(this.selectedBook);
     } else {
       this.chapters = [];
+    }
+  }
+
+  selectSummaryOption(selectedSummaryOption: string) {
+    this.selectedSummary = selectedSummaryOption;
+    if(this.selectedSummary === 'summary1') {
+      this.summaryoption = 'summary1';
+    }
+    else if(this.selectedSummary === 'summary2') {
+      this.summaryoption = 'summary2';
+    }
+    else if(this.selectedSummary === 'summary3') {
+      this.summaryoption = 'summary3';
+    }
+  }
+
+  fetchChapterContent(selChapter: string) {
+    this.selectedChapter = selChapter;
+    console.log(this.selectedChapter.replace(" ",""))
+  }
+
+  fetchChapterNames(bookName: string) {
+    this.http.get<any[]>('http://localhost:8000/book/'+bookName+'/chapters')
+      .subscribe({
+        next: (data) => {
+          this.chapters = data.map(chapter => ({
+            label: chapter,
+            value: chapter
+          }));
+        },
+        error: (err) => console.error('Error fetching chapters:', err)
+      });
+  }
+
+  onChapterChange(){
+    if (this.selectedChapter) {
+      console.log('Selected Chapter:', this.selectedChapter);
+    } else {
+      console.log('No chapter selected');
     }
   }
 

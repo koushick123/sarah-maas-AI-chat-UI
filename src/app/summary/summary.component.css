@@ -1,0 +1,14 @@
+.p-col-6 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.summary-radio-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  max-width: 600px;
+  margin-bottom: 20px;
+}

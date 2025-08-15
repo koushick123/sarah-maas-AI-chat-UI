@@ -1,4 +1,4 @@
-<div [align]="'center'" class="summary-container">
+<div [align]="'center'" class="grid col-12">
     <!-- Logo -->
   <div class="p-text-center">
     <img src="assets/SarAIh_Maas_V2.png" alt="Sarah Maas" width="300">
@@ -6,41 +6,62 @@
   </div>
 
   <!-- Chapter selection -->
-  <div [align]="'center'" class="chapter-selection" >
-    
-      <!-- Book selection -->
+  <div class="grid col-12">    
     <p-select 
         [options]="books" 
         [(ngModel)]="selectedBook"
         placeholder="Select a Book"
         (onChange)="onBookChange()">
     </p-select>
-    <br><br>
-    <p-select *ngIf="selectedBook"
+  </div>
+  <br>
+  <div class="grid col-12">
+    <div class="grid col-6" [align]="'center'">
+    <p-select 
+        *ngIf="selectedBook"
         [options]="chapters" 
         [(ngModel)]="selectedChapter"
-        placeholder="Select a Chapter"
-        >
-    </p-select> 
+        (onChange)="onChapterChange()"
+        placeholder="Select a Chapter">
+    </p-select>
+    </div>
+    <br>
+    <div class="grid col-6" [align]="'center'">
+    <p-button 
+        label="Show me Chapter Content" 
+        icon="pi pi-book" 
+        (onClick)="fetchChapterContent(selectedChapter)"
+        *ngIf="selectedChapter" >
+      </p-button>
+    </div>
   </div>
-  
+
   <!-- Summary options -->
-  <div *ngIf="selectedChapter">
+  <div *ngIf="selectedChapter" class="p-col-6">
     <h4>🧪 Deep Analysis Summaries</h4>
-    <div *ngFor="let opt of summaryOptions">
-      <p-radiobutton 
-        name="summary" 
-        value="opt" 
-        [(ngModel)]="selectedSummary">
-      </p-radiobutton>
+    <div class="summary-radio-row">
+      <p-radiobutton name="summary" value="summary1" [(ngModel)]="summaryoption" inputId="summaryoption1" (onClick)="selectSummaryOption(summaryoption)"/>
+      <label for="summaryoption1">&nbsp;&nbsp;Summary 1 - Summarize entire chapter using regular ChatGPT</label>
+    </div>
+    <div class="summary-radio-row">
+      <p-radiobutton name="summary" value="summary2" [(ngModel)]="summaryoption" inputId="summaryoption2" (onClick)="selectSummaryOption(summaryoption)"/>
+      <label for="summaryoption2">&nbsp;&nbsp;Summary 2 - Summarize the chapter part by part and merge</label>
+    </div>
+    <div class="summary-radio-row">
+      <p-radiobutton name="summary" value="summary3" [(ngModel)]="summaryoption" inputId="summaryoption3" (onClick)="selectSummaryOption(summaryoption)"/>
+      <label for="summaryoption3">&nbsp;&nbsp;Summary 3 - Merge Summary 1 and Summary 2 using regular ChatGPT</label>
     </div>
   </div>
 
   <!-- Generate Summary Button -->
-  <p-button 
-    label="Generate Summary" 
-    icon="pi pi-send" 
-    (onClick)="generateSummary()" 
-    *ngIf="selectedSummary">
-  </p-button>
+   <div class="col-12" [align]="'center'" style="margin-top: 20px;">
+    <div>
+      <p-button
+        label="Generate Summary" 
+        icon="pi pi-clipboard" 
+        (onClick)="generateSummary()" 
+        *ngIf="selectedSummary">
+      </p-button>
+    </div>
+  </div>
 </div>
