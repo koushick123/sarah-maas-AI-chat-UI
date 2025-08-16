@@ -1,4 +1,4 @@
-<div [align]="'center'" class="grid col-12">
+<div [align]="'center'" class="main-grid-col-12">
     <!-- Logo -->
   <div class="p-text-center">
     <img src="assets/SarAIh_Maas_V2.png" alt="Sarah Maas" width="300">
@@ -6,35 +6,54 @@
   </div>
 
   <!-- Chapter selection -->
-  <div class="grid col-12">    
+  <div class="chapter-col">    
     <p-select 
         [options]="books" 
         [(ngModel)]="selectedBook"
         placeholder="Select a Book"
         (onChange)="onBookChange()">
     </p-select>
-  </div>
   <br>
-  <div class="grid col-12">
-    <div class="grid col-6" [align]="'center'">
-    <p-select 
-        *ngIf="selectedBook"
-        [options]="chapters" 
-        [(ngModel)]="selectedChapter"
-        (onChange)="onChapterChange()"
-        placeholder="Select a Chapter">
-    </p-select>
-    </div>
-    <br>
-    <div class="grid col-6" [align]="'center'">
-    <p-button 
-        label="Show me Chapter Content" 
-        icon="pi pi-book" 
-        (onClick)="fetchChapterContent(selectedChapter)"
-        *ngIf="selectedChapter" >
-      </p-button>
+    <div class="chapter-row">
+      @if (selectedBook) {
+      <p-select 
+          [options]="chapters" 
+          [(ngModel)]="selectedChapter"
+          (onChange)="onChapterChange()"
+          placeholder="Select a Chapter">
+      </p-select>
+      }
+      @if (selectedChapter) {
+      <p-button [raised]="true"
+          label="Show Entire Chapter"
+          icon="pi pi-book" 
+          (onClick)="fetchChapterContent(selectedChapter)">
+        </p-button>
+      }
     </div>
   </div>
+
+  <p-dialog
+    header="Chapter Summary"
+    [modal]="true"
+    [style]="{width: '40vw'}"
+    [closable]="true"
+    [(visible)]="displayDialog"
+    (onHide)="onHideDialog()">
+    @if (!dataFetch) {
+      <p-progress-spinner ariaLabel="loading" />
+    }
+    @if (chapterContent != '') {
+    <div>
+      {{chapterContent}}
+    </div>
+    }
+    @else {
+      <div>
+        <label class="font-color: solid rgb(100,0,0);">No Summary Available</label>
+      </div>
+    }
+  </p-dialog>
 
   <!-- Summary options -->
   <div *ngIf="selectedChapter" class="p-col-6">
@@ -54,14 +73,16 @@
   </div>
 
   <!-- Generate Summary Button -->
-   <div class="col-12" [align]="'center'" style="margin-top: 20px;">
-    <div>
-      <p-button
-        label="Generate Summary" 
-        icon="pi pi-clipboard" 
-        (onClick)="generateSummary()" 
-        *ngIf="selectedSummary">
-      </p-button>
+   @if (selectedSummary === "summary1" || selectedSummary === "summary2") {
+    <div class="col-12" [align]="'center'" style="margin-top: 20px;">
+      <div>
+        <p-button
+          label="Generate Summary" 
+          icon="pi pi-clipboard" 
+          (onClick)="generateSummary()" >
+        </p-button>
+      </div>
     </div>
-  </div>
+  }
+  
 </div>

@@ -8,7 +8,9 @@ import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
 import { TextareaModule } from 'primeng/textarea';
 import { CommonModule } from '@angular/common';
-import { RadioButtonClickEvent, RadioButtonModule } from 'primeng/radiobutton';
+import { RadioButtonModule } from 'primeng/radiobutton';
+import { Dialog } from 'primeng/dialog';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 @Component({
   selector: 'app-summary',
@@ -21,9 +23,10 @@ import { RadioButtonClickEvent, RadioButtonModule } from 'primeng/radiobutton';
     CommonModule,
     // CardModule,
     TextareaModule,
-    RadioButtonModule,  // Import RadioButtonModule
-    // PanelModule
-  ],
+    RadioButtonModule,
+    Dialog,
+    ProgressSpinnerModule
+],
   templateUrl: './summary.component.html',
   styleUrls: ['./summary.component.css']
 })
@@ -39,14 +42,15 @@ export class SummaryComponent {
   selectedBook: string | null = null;
   selectedChapter: string | null = null;
   summaryoption: string = '';    
-
+  chapterContent: string = '';
+  displayDialog: boolean = false;
   selectedSummary: string | null = null;
 
   constructor(private http: HttpClient) {}
 
   onBookChange() {
     if (this.selectedBook !== null) {
-      this.fetchChapterNames(this.selectedBook);
+      this.fetchChapterNames();
     } else {
       this.chapters = [];
     }
@@ -66,12 +70,37 @@ export class SummaryComponent {
   }
 
   fetchChapterContent(selChapter: string) {
-    this.selectedChapter = selChapter;
-    console.log(this.selectedChapter.replace(" ",""))
+    this.selectedChapter = selChapter.replace(" ","");
+    this.dataFetch = false;
+    this.displayDialog = true;
+    this.showChapterContent();
   }
 
-  fetchChapterNames(bookName: string) {
-    this.http.get<any[]>('http://localhost:8000/book/'+bookName+'/chapters')
+  dataFetch: boolean = false;
+  url: string = '';
+
+  showChapterContent(){
+    this.url = 'http://localhost:8000/book/'+this.selectedBook+'/chapter/'+this.selectedChapter+'/contents';
+    console.log(this.url);
+    this.http.get<string>(this.url)
+      .subscribe({
+        next :(data) => {
+          this.dataFetch = true;
+          this.chapterContent = data;
+        },
+        error: (err) => {
+          this.dataFetch = true;
+          this.chapterContent = "Unable to Fetch Chapter Summary !!"
+        }
+      });
+  }
+
+  onHideDialog(){
+    this.displayDialog = false;
+  }
+
+  fetchChapterNames() {
+    this.http.get<any[]>('http://localhost:8000/book/'+this.selectedBook+'/chapters')
       .subscribe({
         next: (data) => {
           this.chapters = data.map(chapter => ({
