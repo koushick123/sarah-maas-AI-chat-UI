@@ -11,6 +11,8 @@ import { CommonModule } from '@angular/common';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { Dialog } from 'primeng/dialog';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { MessageModule } from 'primeng/message';
+import { ScrollTopModule } from 'primeng/scrolltop';
 
 @Component({
   selector: 'app-summary',
@@ -25,7 +27,9 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
     TextareaModule,
     RadioButtonModule,
     Dialog,
-    ProgressSpinnerModule
+    ProgressSpinnerModule,
+    MessageModule,
+    ScrollTopModule
 ],
   templateUrl: './summary.component.html',
   styleUrls: ['./summary.component.css']
@@ -70,11 +74,18 @@ export class SummaryComponent {
   }
 
   fetchChapterContent(selChapter: string) {
-    this.selectedChapter = selChapter.replace(" ","");
-    this.dataFetch = false;
+    this.selectedChapter = selChapter;
+    this.dataFetch = false;   
     this.displayDialog = true;
+    this.chapterContent = '';
     this.showChapterContent();
   }
+
+  delayAction(ms: number, callback: () => void) {
+  setTimeout(() => {
+    callback();
+  }, ms);
+}
 
   dataFetch: boolean = false;
   url: string = '';
@@ -90,7 +101,6 @@ export class SummaryComponent {
         },
         error: (err) => {
           this.dataFetch = true;
-          this.chapterContent = "Unable to Fetch Chapter Summary !!"
         }
       });
   }

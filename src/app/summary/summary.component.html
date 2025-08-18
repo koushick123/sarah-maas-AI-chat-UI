@@ -34,24 +34,29 @@
   </div>
 
   <p-dialog
-    header="Chapter Summary"
+    [header]="'Chapter Summary - ' + selectedChapter"
     [modal]="true"
     [style]="{width: '40vw'}"
     [closable]="true"
     [(visible)]="displayDialog"
     (onHide)="onHideDialog()">
     @if (!dataFetch) {
-      <p-progress-spinner ariaLabel="loading" />
+      <div class="block">
+        <label class="font-color: solid rgb(100,0,0);">Fetching Summary...</label>
+        <br><br>
+        <p-progress-spinner ariaLabel="loading" [style]="{ width: '40px', height: '40px' }"/>
+      </div>      
     }
     @if (chapterContent != '') {
-    <div>
+    <p align="left">
       {{chapterContent}}
-    </div>
+    </p>
+      <p-scrolltop target="parent" styleClass="custom-scrolltop" icon="pi pi-arrow-up" />
     }
-    @else {
-      <div>
-        <label class="font-color: solid rgb(100,0,0);">No Summary Available</label>
-      </div>
+    @else if (chapterContent === '' && dataFetch) {
+      <p-message severity="error"> 
+        No Summary Available!!
+      </p-message>
     }
   </p-dialog>
 
@@ -76,7 +81,7 @@
    @if (selectedSummary === "summary1" || selectedSummary === "summary2") {
     <div class="col-12" [align]="'center'" style="margin-top: 20px;">
       <div>
-        <p-button
+        <p-button [raised]="true"
           label="Generate Summary" 
           icon="pi pi-clipboard" 
           (onClick)="generateSummary()" >
