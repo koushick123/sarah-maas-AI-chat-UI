@@ -6,7 +6,7 @@
   </div>
 
   <!-- Chapter selection -->
-  <div class="chapter-col">    
+  <div class="chapter-col">
     <p-select 
         [options]="books" 
         [(ngModel)]="selectedBook"
@@ -14,12 +14,24 @@
         (onChange)="onBookChange()">
     </p-select>
   <br>
+  <!--Part List-->
+    <div>
+    @if (selectedBook) {
+      <p-select 
+          [options]="parts" 
+          [(ngModel)]="selectedPart"
+          (onChange)="fetchChapterFromPart()"
+          placeholder="Select a Part">
+      </p-select>
+    }
+    </div>
+    <br>
+    <!--Chapter List-->
     <div class="chapter-row">
-      @if (selectedBook) {
+      @if (selectedBook && selectedPart) {
       <p-select 
           [options]="chapters" 
           [(ngModel)]="selectedChapter"
-          (onChange)="onChapterChange()"
           placeholder="Select a Chapter">
       </p-select>
       }
@@ -61,21 +73,23 @@
   </p-dialog>
 
   <!-- Summary options -->
-  <div *ngIf="selectedChapter" class="p-col-6">
-    <h4>🧪 Deep Analysis Summaries</h4>
-    <div class="summary-radio-row">
-      <p-radiobutton name="summary" value="summary1" [(ngModel)]="summaryoption" inputId="summaryoption1" (onClick)="selectSummaryOption(summaryoption)"/>
-      <label for="summaryoption1">&nbsp;&nbsp;Summary 1 - Summarize entire chapter using regular ChatGPT</label>
+  @if(selectedChapter) {
+    <div class="p-col-6">
+      <h4>🧪 Deep Analysis Summaries</h4>
+      <div class="summary-radio-row">
+        <p-radiobutton name="summary" value="summary1" [(ngModel)]="summaryoption" inputId="summaryoption1" (onClick)="selectSummaryOption(summaryoption)"/>
+        <label for="summaryoption1">&nbsp;&nbsp;Summary 1 - Summarize entire chapter using regular ChatGPT</label>
+      </div>
+      <div class="summary-radio-row">
+        <p-radiobutton name="summary" value="summary2" [(ngModel)]="summaryoption" inputId="summaryoption2" (onClick)="selectSummaryOption(summaryoption)"/>
+        <label for="summaryoption2">&nbsp;&nbsp;Summary 2 - Summarize the chapter part by part and merge</label>
+      </div>
+      <div class="summary-radio-row">
+        <p-radiobutton name="summary" value="summary3" [(ngModel)]="summaryoption" inputId="summaryoption3" (onClick)="selectSummaryOption(summaryoption)"/>
+        <label for="summaryoption3">&nbsp;&nbsp;Summary 3 - Merge Summary 1 and Summary 2 using regular ChatGPT</label>
+      </div>
     </div>
-    <div class="summary-radio-row">
-      <p-radiobutton name="summary" value="summary2" [(ngModel)]="summaryoption" inputId="summaryoption2" (onClick)="selectSummaryOption(summaryoption)"/>
-      <label for="summaryoption2">&nbsp;&nbsp;Summary 2 - Summarize the chapter part by part and merge</label>
-    </div>
-    <div class="summary-radio-row">
-      <p-radiobutton name="summary" value="summary3" [(ngModel)]="summaryoption" inputId="summaryoption3" (onClick)="selectSummaryOption(summaryoption)"/>
-      <label for="summaryoption3">&nbsp;&nbsp;Summary 3 - Merge Summary 1 and Summary 2 using regular ChatGPT</label>
-    </div>
-  </div>
+  }
 
   <!-- Generate Summary Button -->
    @if (selectedSummary === "summary1" || selectedSummary === "summary2") {
@@ -89,5 +103,27 @@
       </div>
     </div>
   }
-  
+
+  <br><br>  
+  @if(selectedSummary === "summary1"){
+    @if(!fetchedsummary){
+      <p-message severity="info">Fetching Summary from ChatGPT...</p-message>
+      <p-progress-spinner ariaLabel="loading" [style]="{ width: '40px', height: '40px' }"/>
+    }
+    @else {
+      <p-message severity="success">Summary from ChatGPT</p-message>
+      <textarea rows="15" cols="70" pTextarea [(ngModel)]="summaryvalue" readonly></textarea>
+    }
+  }
+  <br>
 </div>
+<br><br>
+<!-- Professional Footer -->
+<footer class="app-footer">
+  <div class="footer-content">
+    <span>&copy; 2025 SarAIh Maas | Crescent City Series Analysis</span>
+    <span class="footer-links">
+      <a href="https://github.com/koushick/sarah-maas-AI-chat-UI" target="_blank">GitHub</a>
+    </span>
+  </div>
+</footer>

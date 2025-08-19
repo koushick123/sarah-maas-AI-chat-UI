@@ -43,12 +43,18 @@ export class SummaryComponent {
   ];
 
   chapters: any[] = [];
+  parts: any[] = [];
   selectedBook: string | null = null;
   selectedChapter: string | null = null;
   summaryoption: string = '';    
   chapterContent: string = '';
   displayDialog: boolean = false;
   selectedSummary: string | null = null;
+  part_chapter_map: Map<string, string[]> = new Map();
+  selectedPart: string = '';
+  summaryvalue: string = '';
+  fetchedsummary: boolean = false;
+  BASE_URL: string = 'http://localhost:8000';
 
   constructor(private http: HttpClient) {}
 
@@ -91,7 +97,7 @@ export class SummaryComponent {
   url: string = '';
 
   showChapterContent(){
-    this.url = 'http://localhost:8000/book/'+this.selectedBook+'/chapter/'+this.selectedChapter+'/contents';
+    this.url = this.BASE_URL+'/book/'+this.selectedBook+'/chapter/'+this.selectedChapter+'/contents';
     console.log(this.url);
     this.http.get<string>(this.url)
       .subscribe({
@@ -108,38 +114,54 @@ export class SummaryComponent {
   onHideDialog(){
     this.displayDialog = false;
   }
-
+  
   fetchChapterNames() {
-    this.http.get<any[]>('http://localhost:8000/book/'+this.selectedBook+'/chapters')
+    this.http.get<Map<string, string[]>>(this.BASE_URL+'/book/'+this.selectedBook+'/chapters')
       .subscribe({
         next: (data) => {
-          this.chapters = data.map(chapter => ({
-            label: chapter,
-            value: chapter
-          }));
+          const sortedEntries = Object.entries(data).sort(([a], [b]) => a.localeCompare(b));
+          this.part_chapter_map = new Map<string, string[]>(sortedEntries);
+          
+          // Parts list
+          this.parts = Array.from(this.part_chapter_map.keys());
         },
         error: (err) => console.error('Error fetching chapters:', err)
       });
   }
 
-  onChapterChange(){
-    if (this.selectedChapter) {
-      console.log('Selected Chapter:', this.selectedChapter);
-    } else {
-      console.log('No chapter selected');
+  fetchChapterFromPart(){
+    if (typeof (this.part_chapter_map.get(this.selectedPart)) != 'undefined'){
+      const chaptersList = this.part_chapter_map.get(this.selectedPart);
+      if (chaptersList) {
+        this.chapters = chaptersList.map(chapter => ({
+          label: chapter,
+          value: chapter
+        }));
+      }
     }
   }
 
   generateSummary() {
-    const payload = {
-      chapter_summary: `Content of ${this.selectedChapter}`,
-      summary_option: this.selectedSummary
+    const summary_request_payload = {
+      "book_name": this.selectedBook,
+      "part": this.selectedPart,
+      "chapter_name": this.selectedChapter,
+      "chapter_content": this.chapterContent,
+      "summary_option": this.selectedSummary
     };
 
-    this.http.post('http://127.0.0.1:8000/chapter/summary', payload)
+    this.http.post<string>(this.BASE_URL+'/chapter/summary', summary_request_payload)
       .subscribe({
-        next: (res) => console.log('Summary:', res),
-        error: (err) => console.error('Error:', err)
+        next: (summary) => {
+          this.summaryvalue = summary;
+          console.log('Summary:', summary);
+          this.fetchedsummary = true;
+        },
+        error: (err) => {
+          console.error('Error:', err)
+          this.summaryvalue = err;
+          this.fetchedsummary = true;
+        }
       });
   }
 }
