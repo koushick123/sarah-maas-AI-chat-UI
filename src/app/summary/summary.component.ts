@@ -55,6 +55,7 @@ export class SummaryComponent {
   summaryvalue: string = '';
   fetchedsummary: boolean = false;
   BASE_URL: string = 'http://localhost:8000';
+  generatesummary: boolean = false;
 
   constructor(private http: HttpClient) {}
 
@@ -68,15 +69,27 @@ export class SummaryComponent {
 
   selectSummaryOption(selectedSummaryOption: string) {
     this.selectedSummary = selectedSummaryOption;
-    if(this.selectedSummary === 'summary1') {
-      this.summaryoption = 'summary1';
-    }
-    else if(this.selectedSummary === 'summary2') {
-      this.summaryoption = 'summary2';
-    }
-    else if(this.selectedSummary === 'summary3') {
-      this.summaryoption = 'summary3';
-    }
+    this.summaryoption = this.selectedSummary;
+    this.generatesummary = true;
+    const summary_request_payload = {
+      "book_name": this.selectedBook,
+      "part": this.selectedPart,
+      "chapter_name": this.selectedChapter,
+      "chapter_content": this.chapterContent,
+      "summary_option": this.selectedSummary
+    };
+    this.http.post<any>(this.BASE_URL+'/chapter/summaries', summary_request_payload)
+      .subscribe({
+        next: (summary) => {
+          this.summaryvalue = summary['summary'];
+          console.log('Summary:', summary);
+
+        },
+        error: (err) => {
+          console.error('Error:', err)
+          this.summaryvalue = err;
+        }
+      });
   }
 
   fetchChapterContent(selChapter: string) {
@@ -149,19 +162,36 @@ export class SummaryComponent {
       "chapter_content": this.chapterContent,
       "summary_option": this.selectedSummary
     };
-
+    this.generatesummary = true;
     this.http.post<string>(this.BASE_URL+'/chapter/summary', summary_request_payload)
       .subscribe({
         next: (summary) => {
           this.summaryvalue = summary;
           console.log('Summary:', summary);
-          this.fetchedsummary = true;
+
         },
         error: (err) => {
           console.error('Error:', err)
           this.summaryvalue = err;
-          this.fetchedsummary = true;
         }
+      });
+    // this.summaryvalue = 'Dummy Summary';
+  }
+
+  saveSummary(){
+    const save_summary_payload = {
+      "book_name": this.selectedBook,
+      "part": this.selectedPart,
+      "chapter_name": this.selectedChapter,
+      "chapter_summary": this.summaryvalue,
+      "summary_option": this.selectedSummary
+    };
+    this.http.post<any>(this.BASE_URL+'/chapter/save', save_summary_payload)
+      .subscribe({
+        next: (message) => {
+          console.log(message['message']);
+        },
+        error: (err) => console.log(err)
       });
   }
 }

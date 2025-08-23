@@ -37,16 +37,25 @@ html, body {
 
 .chapter-row {
   display: grid;
+  grid-template-columns: 1fr; 
+  /*border: 4px solid rgb(65, 197, 4);
+  border-radius: 6px;*/
+  justify-content: center;
+  gap: 16px; 
+}
+
+.chapter-row-with-button {
+  display: grid;
   grid-template-columns: 1fr 1fr; 
   /*border: 4px solid rgb(65, 197, 4);
   border-radius: 6px;*/
-  align-self: center;
+  align-content: left;
   gap: 16px; 
 }
 
 .app-footer {
   width: 100%;
-  background: #222;
+  background: #1f4923;
   color: #eee;
   padding: 18px 0;
   text-align: center;

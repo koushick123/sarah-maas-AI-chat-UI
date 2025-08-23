@@ -13,6 +13,7 @@
         placeholder="Select a Book"
         (onChange)="onBookChange()">
     </p-select>
+    
   <br>
   <!--Part List-->
     <div>
@@ -26,29 +27,38 @@
     }
     </div>
     <br>
-    <!--Chapter List-->
-    <div class="chapter-row">
-      @if (selectedBook && selectedPart) {
-      <p-select 
+    <!--Chapter List-->    
+      @if (selectedBook && selectedPart && !selectedChapter) {
+        <div class="chapter-row">
+          <p-select 
+              [options]="chapters" 
+              [(ngModel)]="selectedChapter"
+              placeholder="Select a Chapter">
+          </p-select>
+        </div>
+      }
+
+      @if (selectedChapter) {
+        <div class="chapter-row-with-button">
+          <p-select 
           [options]="chapters" 
           [(ngModel)]="selectedChapter"
           placeholder="Select a Chapter">
-      </p-select>
-      }
-      @if (selectedChapter) {
-      <p-button [raised]="true"
-          label="Show Entire Chapter"
-          icon="pi pi-book" 
-          (onClick)="fetchChapterContent(selectedChapter)">
-        </p-button>
-      }
-    </div>
+          </p-select>
+          
+          <p-button [raised]="true"
+            label="Show Entire Chapter"
+            icon="pi pi-book" 
+            (onClick)="fetchChapterContent(selectedChapter)">
+          </p-button>
+        </div>
+      }    
   </div>
 
   <p-dialog
     [header]="'Chapter Summary - ' + selectedChapter"
     [modal]="true"
-    [style]="{width: '40vw'}"
+    [style]="{width: '40vw', height: '35vw'}"
     [closable]="true"
     [(visible)]="displayDialog"
     (onHide)="onHideDialog()">
@@ -56,7 +66,7 @@
       <div class="block">
         <label class="font-color: solid rgb(100,0,0);">Fetching Summary...</label>
         <br><br>
-        <p-progress-spinner ariaLabel="loading" [style]="{ width: '40px', height: '40px' }"/>
+        <p-progress-spinner ariaLabel="loading" [style]="{ width: '40px', height: '30px' }"/>
       </div>      
     }
     @if (chapterContent != '') {
@@ -105,15 +115,29 @@
   }
 
   <br><br>  
-  @if(selectedSummary === "summary1"){
-    @if(!fetchedsummary){
-      <p-message severity="info">Fetching Summary from ChatGPT...</p-message>
-      <p-progress-spinner ariaLabel="loading" [style]="{ width: '40px', height: '40px' }"/>
-    }
-    @else {
-      <p-message severity="success">Summary from ChatGPT</p-message>
-      <textarea rows="15" cols="70" pTextarea [(ngModel)]="summaryvalue" readonly></textarea>
-    }
+  @if(generatesummary){
+    <!-- @if(selectedSummary === "summary1"){ -->
+      @if(summaryvalue === ''){
+        <div style="display: flex; justify-content: center; align-items: center;">
+          <p-message severity="info">Fetching Summary from ChatGPT...</p-message>
+        </div>
+        <br>
+        <p-progress-spinner ariaLabel="loading" [style]="{ width: '40px', height: '40px' }"/>
+      }
+      @else {
+        <div style="display: flex; justify-content: center; align-items: center;">
+          <p-message severity="success">Summary from ChatGPT</p-message>
+        </div>
+        <br>
+        <textarea rows="15" cols="70" pTextarea [(ngModel)]="summaryvalue" readonly></textarea>
+        <br><br>
+          <p-button [raised]="true"
+            label="Save Summary" 
+            icon="pi pi-save" 
+            (onClick)="saveSummary()" >
+          </p-button>
+      }
+    <!-- } -->
   }
   <br>
 </div>
