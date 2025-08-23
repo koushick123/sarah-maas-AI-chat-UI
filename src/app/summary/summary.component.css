@@ -23,8 +23,6 @@ html, body {
   display: flex;
   flex-direction: column;
   justify-self: center;
-  /*border: 3px solid #500;
-  border-radius: 6px;*/
 }
 
 .chapter-col {

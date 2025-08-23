@@ -38,11 +38,12 @@
         </div>
       }
 
-      @if (selectedChapter) {
+      @if (selectedBook && selectedPart && selectedChapter) {
         <div class="chapter-row-with-button">
           <p-select 
           [options]="chapters" 
           [(ngModel)]="selectedChapter"
+          (onChange)="updateSummary()"
           placeholder="Select a Chapter">
           </p-select>
           
@@ -116,7 +117,6 @@
 
   <br><br>  
   @if(generatesummary){
-    <!-- @if(selectedSummary === "summary1"){ -->
       @if(summaryvalue === ''){
         <div style="display: flex; justify-content: center; align-items: center;">
           <p-message severity="info">Fetching Summary from ChatGPT...</p-message>
@@ -131,13 +131,19 @@
         <br>
         <textarea rows="15" cols="70" pTextarea [(ngModel)]="summaryvalue" readonly></textarea>
         <br><br>
-          <p-button [raised]="true"
-            label="Save Summary" 
-            icon="pi pi-save" 
-            (onClick)="saveSummary()" >
-          </p-button>
+        @if(!savedsummary){
+          <p-progress-spinner ariaLabel="loading" [style]="{ width: '40px', height: '40px' }"/>
+          <br>
+        } 
+        <p-button [raised]="true"
+          label="Save Summary" 
+          icon="pi pi-save" 
+          (onClick)="saveSummary()" >
+        </p-button>
+        @if(savedsummary){
+          <p-toast position="bottom-center" life="2000" />
+        }
       }
-    <!-- } -->
   }
   <br>
 </div>
