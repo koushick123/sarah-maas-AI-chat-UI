@@ -1,7 +1,7 @@
 <div [align]="'center'" class="main-grid-col-12">
     <!-- Logo -->
   <div class="p-text-center">
-    <img src="assets/SarAIh_Maas_V2.png" alt="Sarah Maas" width="300">
+    <img src="assets/SarAIh_Maas_V2.png" alt="Sarah Maas" width="270">
     <h5>SarAIh Maas can give you detailed analysis on the Crescent City series of Sarah Maas Books</h5>
   </div>
 
@@ -131,29 +131,29 @@
         <br>
         <textarea rows="15" cols="70" pTextarea [(ngModel)]="summaryvalue" readonly></textarea>
         <br><br>
-        @if(!savedsummary){
-          <p-progress-spinner ariaLabel="loading" [style]="{ width: '40px', height: '40px' }"/>
-          <br>
-        } 
         <p-button [raised]="true"
           label="Save Summary" 
           icon="pi pi-save" 
           (onClick)="saveSummary()" >
         </p-button>
-        @if(savedsummary){
-          <p-toast position="bottom-center" life="2000" />
         }
-      }
+        @if(!savedsummary){
+          <p-progress-spinner ariaLabel="loading" [style]="{ width: '40px', height: '40px' }"/>
+          <br>
+        } 
+        
+        <p-toast position="bottom-center" life="1000" />
+        
   }
   <br>
 </div>
 <br><br>
 <!-- Professional Footer -->
-<footer class="app-footer">
+<!-- <footer class="app-footer">
   <div class="footer-content">
     <span>&copy; 2025 SarAIh Maas | Crescent City Series Analysis</span>
     <span class="footer-links">
       <a href="https://github.com/koushick/sarah-maas-AI-chat-UI" target="_blank">GitHub</a>
     </span>
   </div>
-</footer>
+</footer> -->

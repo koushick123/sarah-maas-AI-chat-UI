@@ -63,8 +63,7 @@ export class SummaryComponent {
   doc_id: number = -1;
   dataFetch: boolean = false;
   url: string = '';
-  summarysave: boolean = false;
-
+  
   constructor(private http: HttpClient, private messageService: MessageService) {}
 
   onBookChange() {
@@ -218,7 +217,6 @@ export class SummaryComponent {
       });
   }
 
-  summarysaveerror = false;
   savedsummary = true;
 
   saveSummary(){
@@ -230,12 +228,12 @@ export class SummaryComponent {
       "summary_option": this.selectedSummary,
       "doc_id": this.doc_id
     };
+    console.log("Payload = "+JSON.stringify(save_summary_payload));
     this.savedsummary = false;
     this.http.post<any>(this.BASE_URL+'/chapter/save', save_summary_payload)
       .subscribe({
         next: (message) => {
           console.log(message['message']);
-          this.summarysave = true;
           this.savedsummary = true;
           this.messageService.add({
             severity: 'success',
@@ -244,7 +242,6 @@ export class SummaryComponent {
           });
         },
         error: (err) => {
-          this.summarysave = true;
           this.savedsummary = true;
           this.messageService.add({
             severity: 'error',
