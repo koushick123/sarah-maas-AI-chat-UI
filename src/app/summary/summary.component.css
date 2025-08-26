@@ -53,6 +53,19 @@ html, body {
   gap: 16px; 
 }
 
+.summaries-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr; 
+  gap: 50px; 
+}
+
+.third-summaries-row {
+  display: flex;
+  flex-direction: column;
+  align-self: center;
+  width: 50%;
+}
+
 .app-footer {
   width: 100%;
   background: #1f4923;

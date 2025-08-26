@@ -41,10 +41,10 @@
       @if (selectedBook && selectedPart && selectedChapter) {
         <div class="chapter-row-with-button">
           <p-select 
-          [options]="chapters" 
-          [(ngModel)]="selectedChapter"
-          (onChange)="updateSummary()"
-          placeholder="Select a Chapter">
+            [options]="chapters" 
+            [(ngModel)]="selectedChapter"
+            (onChange)="updateSummary()"
+            placeholder="Select a Chapter">
           </p-select>
           
           <p-button [raised]="true"
@@ -103,7 +103,7 @@
   }
 
   <!-- Generate Summary Button -->
-   @if (selectedSummary === "summary1" || selectedSummary === "summary2") {
+   @if (summaryoption === "summary1" || summaryoption === "summary2" || summaryoption === "summary3") {
     <div class="col-12" [align]="'center'" style="margin-top: 20px;">
       <div>
         <p-button [raised]="true"
@@ -117,7 +117,8 @@
 
   <br><br>  
   @if(generatesummary){
-      @if(summaryvalue === ''){
+      @if((summaryoption === 'summary1' && summary1value === '') || ((summaryoption === 'summary2' && summary2value === ''))
+        || ((summaryoption === 'summary3' && summary3value === ''))){
         <div style="display: flex; justify-content: center; align-items: center;">
           <p-message severity="info">Fetching Summary from ChatGPT...</p-message>
         </div>
@@ -129,7 +130,23 @@
           <p-message severity="success">Summary from ChatGPT</p-message>
         </div>
         <br>
-        <textarea rows="15" cols="70" pTextarea [(ngModel)]="summaryvalue" readonly></textarea>
+        @if(summaryoption === 'summary1'){
+          <textarea rows="15" cols="70" pTextarea [(ngModel)]="summary1value" readonly></textarea>
+        }
+        @else if(summaryoption === 'summary2'){
+          <textarea rows="15" cols="70" pTextarea [(ngModel)]="summary2value" readonly></textarea>
+        }
+        @else {
+          <div class="summaries-row">
+            <textarea rows="15" cols="70" pTextarea [(ngModel)]="summary1value" readonly></textarea>
+            <textarea rows="15" cols="70" pTextarea [(ngModel)]="summary2value" readonly></textarea>
+          </div>
+            <br><br>
+          <div class="third-summaries-row">
+            <textarea rows="15" cols="70" pTextarea [(ngModel)]="summary3value" readonly></textarea>
+          </div>
+          
+        }
         <br><br>
         <p-button [raised]="true"
           label="Save Summary" 
@@ -149,11 +166,11 @@
 </div>
 <br><br>
 <!-- Professional Footer -->
-<!-- <footer class="app-footer">
+<footer class="app-footer">
   <div class="footer-content">
     <span>&copy; 2025 SarAIh Maas | Crescent City Series Analysis</span>
     <span class="footer-links">
       <a href="https://github.com/koushick/sarah-maas-AI-chat-UI" target="_blank">GitHub</a>
     </span>
   </div>
-</footer> -->
+</footer>

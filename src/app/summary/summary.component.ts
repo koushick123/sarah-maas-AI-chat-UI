@@ -53,24 +53,25 @@ export class SummaryComponent {
   summaryoption: string = '';    
   chapterContent: string = '';
   displayDialog: boolean = false;
-  selectedSummary: string | null = null;
   part_chapter_map: Map<string, string[]> = new Map();
   selectedPart: string = '';
-  summaryvalue: string = '';
+  summary1value: string = '';
+  summary2value: string = '';
+  summary3value: string = '';
   fetchedsummary: boolean = false;
   BASE_URL: string = 'http://localhost:8000';
   generatesummary: boolean = false;
   doc_id: number = -1;
   dataFetch: boolean = false;
   url: string = '';
-  
+  summary_request_payload: any = '';
+    
   constructor(private http: HttpClient, private messageService: MessageService) {}
 
   onBookChange() {
     if (this.selectedBook !== null) {
       this.selectedChapter = null;
       this.selectedPart = '';
-      this.selectedSummary = null;
       this.summaryoption = '';
       this.generatesummary = false;
       this.fetchChapterNames();
@@ -79,64 +80,177 @@ export class SummaryComponent {
     }
   }
 
+  summary1empty: boolean = true;
+  summary2empty: boolean = true;
+
   selectSummaryOption(selectedSummaryOption: string) {
-    this.selectedSummary = selectedSummaryOption;
-    this.summaryoption = this.selectedSummary;
+    this.summaryoption = selectedSummaryOption;
     this.generatesummary = true;
-    const summary_request_payload = {
+    this.summary_request_payload = {
       "book_name": this.selectedBook,
       "part": this.selectedPart,
       "chapter_name": this.selectedChapter,
       "chapter_summary": '',
-      "summary_option": this.selectedSummary,
+      "summary_option": this.summaryoption,
       "doc_id": this.doc_id
     };
-    this.summaryvalue='';
-    this.fetchSavedSummary(summary_request_payload);
+    
+    if(this.summaryoption == 'summary1'){
+      const summaryNotFound: string = 'No chapter summaries found.';
+      if(this.summary1value == '' || this.summary1value == summaryNotFound){
+        //To enable spinner to be shown
+        this.summary1value = '';
+        this.fetchSavedSummary(this.summary_request_payload);
+      }
+    }
+    else if(this.summaryoption == 'summary2'){
+      const summaryNotFound: string = 'No chapter summaries found.';
+      if(this.summary2value == '' || this.summary2value == summaryNotFound){
+        //To enable spinner to be shown
+        this.summary2value = '';
+        this.fetchSavedSummary(this.summary_request_payload);
+      }
+    }
+    else{
+      if(this.summary1empty || this.summary2empty){
+        this.fetchAllSummaries(this.summary_request_payload);
+      }
+    }
+  }
+
+  originaloption: string = '';
+
+  fetchAllSummaries(summary_request_payload: any){
+    this.originaloption = this.summaryoption;  
+    
+    //Fetch summary 1    
+    summary_request_payload['summary_option']='summary1';
+    this.summaryoption = 'summary1';
+
+    this.http.post<any>(this.BASE_URL+'/chapter/summaries', summary_request_payload)
+      .subscribe({
+        next: (summary) => {
+          this.summary1value = summary['summary'];
+          this.summary1empty = false;        
+          console.log('Summary 1 :', summary);
+          
+          //Fetch summary 2 
+          summary_request_payload['summary_option']='summary2';
+          this.summaryoption = 'summary2';
+
+          this.http.post<any>(this.BASE_URL+'/chapter/summaries', summary_request_payload)
+          .subscribe({
+            next: (summary) => {
+                this.summary2value = summary['summary'];
+                this.summary2empty = false;
+                console.log('Summary 2 :', summary);
+                
+                //Fetch summary 3
+                summary_request_payload['summary_option']='summary3';
+                this.summaryoption = 'summary3';
+
+                this.http.post<any>(this.BASE_URL+'/chapter/summaries', summary_request_payload)
+                .subscribe({
+                  next: (summary) => {
+                    this.summary3value = summary['summary'];
+                    console.log('Summary 3 :', summary);
+                  },
+                    error: (err) => {
+                    console.error('Error summary 3 :', err)
+                    this.summary3value = err;
+                  }
+                });
+              },
+              error: (err) => {
+                console.error('Error summary 2 :', err)
+                this.summary2value=err;
+              }
+          });
+          this.summaryoption = this.originaloption;
+          console.log('Restore original option = '+this.originaloption);
+        },
+        error: (err) => {
+          console.error('Error:', err)
+          if(this.summaryoption == 'summary1'){
+            this.summary1value=err;
+          }
+          else if(this.summaryoption == 'summary2'){
+            this.summary2value=err;
+          }
+          else{
+            this.summary3value=err;
+          }
+          this.summaryoption = this.originaloption;
+        }
+      });
   }
 
   fetchSavedSummary(summary_request_payload: any){
     this.http.post<any>(this.BASE_URL+'/chapter/summaries', summary_request_payload)
       .subscribe({
         next: (summary) => {
-          this.summaryvalue = summary['summary'];
+          if(this.summaryoption == 'summary1'){
+            this.summary1value = summary['summary'];
+            this.summary1empty = false;
+          }
+          else if(this.summaryoption == 'summary2'){
+            this.summary2value = summary['summary'];
+            this.summary2empty = false;
+          }
+          else{
+            this.summary3value = summary['summary'];
+          }
+
           this.doc_id = summary['doc_id'];
           console.log('Summary:', summary);
 
         },
         error: (err) => {
           console.error('Error:', err)
-          this.summaryvalue = err;
+          if(this.summaryoption == 'summary1'){
+            this.summary1value=err;
+          }
+          else if(this.summaryoption == 'summary2'){
+            this.summary2value=err;
+          }
+          else{
+            this.summary3value=err;
+          }
         }
       });
   }
 
   fetchChapterContent(selChapter: string) {
-    this.selectedChapter = selChapter.replace(" ","-");
     this.dataFetch = false;   
     this.displayDialog = true;
-    this.chapterContent = '';
+    this.chapterContent = '';      
     this.showChapterContent();
   }
 
+  selChapterWithHyphen: string|null = ''
+
   showChapterContent(){
-    this.url = this.BASE_URL+'/book/'+this.selectedBook+'/chapter/'+this.selectedChapter+'/contents';
-    console.log(this.url);
-    this.http.get<string>(this.url)
-      .subscribe({
-        next :(data) => {
-          this.dataFetch = true;
-          this.chapterContent = data;
-        },
-        error: (err) => {
-          this.dataFetch = true;
-          this.chapterContent = '';
-        }
-      });
+    if(this.selectedChapter){
+      this.selChapterWithHyphen = this.selectedChapter;
+      this.url = this.BASE_URL+'/book/'+this.selectedBook+'/chapter/'+this.selChapterWithHyphen.replace(" ","-")+'/contents';
+      console.log(this.url);
+      this.http.get<string>(this.url)
+        .subscribe({
+          next :(data) => {
+            this.dataFetch = true;
+            this.chapterContent = data;
+          },
+          error: (err) => {
+            this.dataFetch = true;
+            this.chapterContent = '';
+          }
+        });
+    }
   }
 
   onHideDialog(){
     this.displayDialog = false;
+    console.log(this.selectedChapter);
   }
   
   fetchChapterNames() {
@@ -155,9 +269,8 @@ export class SummaryComponent {
 
   fetchChapterFromPart(){
     this.selectedChapter = null;
-      this.selectedSummary = null;
-      this.summaryoption = '';
-      this.generatesummary = false;
+    this.summaryoption = '';
+    this.generatesummary = false;
     if (typeof (this.part_chapter_map.get(this.selectedPart)) != 'undefined'){
       const chaptersList = this.part_chapter_map.get(this.selectedPart);
       if (chaptersList) {
@@ -177,7 +290,7 @@ export class SummaryComponent {
         "part": this.selectedPart,
         "chapter_name": this.selectedChapter,
         "chapter_summary": '',
-        "summary_option": this.selectedSummary,
+        "summary_option": this.summaryoption,
         "doc_id": this.doc_id
       };
       this.fetchSavedSummary(summary_request_payload);
@@ -198,34 +311,60 @@ export class SummaryComponent {
         "part": this.selectedPart,
         "chapter_name": this.selectedChapter,
         "chapter_content": this.chapterContent,
-        "summary_option": this.selectedSummary
+        "summary_option": this.summaryoption
       };
     this.generatesummary = true;
-    this.summaryvalue='';
+    if(this.summaryoption == 'summary1'){
+      this.summary1value='';
+    }
+    else if(this.summaryoption == 'summary2'){
+      this.summary2value='';
+    }
+    else{
+      this.summary3value='';
+    }
     this.http.post<string>(this.BASE_URL+'/chapter/summary', summary_request_payload)
       .subscribe({
         next: (summary) => {
-          this.summaryvalue = summary;
+          if(this.summaryoption == 'summary1'){
+            this.summary1value=summary;
+          }
+          else if(this.summaryoption == 'summary2'){
+            this.summary2value=summary;
+          }
+          else{
+            this.summary3value=summary;
+          }
           if(this.selectedChapter){
             this.selectedChapter = this.selectedChapter.replace("-"," ");
           }
         },
         error: (err) => {
           console.error('Error:', err)
-          this.summaryvalue = err;
+          if(this.summaryoption == 'summary1'){
+            this.summary1value=err;
+          }
+          else if(this.summaryoption == 'summary2'){
+            this.summary2value=err;
+          }
+          else{
+            this.summary3value=err;
+          }
         }
       });
   }
 
   savedsummary = true;
-
+  chapter_summary = '';
   saveSummary(){
+    this.chapter_summary = (this.summaryoption == 'summary1' ? this.summary1value : (this.summaryoption == 'summary2' ? this.summary2value : 
+        this.summary3value));
     const save_summary_payload = {
       "book_name": this.selectedBook,
       "part": this.selectedPart,
       "chapter_name": this.selectedChapter,
-      "chapter_summary": this.summaryvalue,
-      "summary_option": this.selectedSummary,
+      "chapter_summary": this.chapter_summary,
+      "summary_option": this.summaryoption,
       "doc_id": this.doc_id
     };
     console.log("Payload = "+JSON.stringify(save_summary_payload));
@@ -261,7 +400,7 @@ export class SummaryComponent {
 //       "part": this.selectedPart,
 //       "chapter_name": this.selectedChapter,
 //       "chapter_summary": this.summaryvalue,
-//       "summary_option": this.selectedSummary,
+//       "summary_option": this.summaryoption,
 //       "doc_id": this.doc_id
 //     };
     
