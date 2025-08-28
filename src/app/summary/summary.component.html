@@ -85,22 +85,42 @@
 
   <!-- Summary options -->
   @if(selectedChapter) {
-    <div class="p-col-6">
-      <h4>🧪 Deep Analysis Summaries</h4>
-      <div class="summary-radio-row">
-        <p-radiobutton name="summary" value="summary1" [(ngModel)]="summaryoption" inputId="summaryoption1" (onClick)="selectSummaryOption(summaryoption)"/>
-        <label for="summaryoption1">&nbsp;&nbsp;Summary 1 - Summarize entire chapter using regular ChatGPT</label>
+    @if(summaryoption != 'summary3'){
+      <div class="p-col-6">
+        <h4>🧪 Deep Analysis Summaries</h4>
+        <div class="summary-radio-row">
+          <p-radiobutton name="summary" value="summary1" [(ngModel)]="summaryoption" inputId="summaryoption1" (onClick)="selectSummaryOption(summaryoption)"/>
+          <label for="summaryoption1">&nbsp;&nbsp;Summary 1 - Summarize entire chapter using regular ChatGPT</label>
+        </div>
+        <div class="summary-radio-row">
+          <p-radiobutton name="summary" value="summary2" [(ngModel)]="summaryoption" inputId="summaryoption2" (onClick)="selectSummaryOption(summaryoption)"/>
+          <label for="summaryoption2">&nbsp;&nbsp;Summary 2 - Summarize the chapter part by part and merge</label>
+        </div>
+        <div class="summary-radio-row">
+          <p-radiobutton name="summary" value="summary3" [(ngModel)]="summaryoption" inputId="summaryoption3" (onClick)="selectSummaryOption(summaryoption)"/>
+          <label for="summaryoption3">&nbsp;&nbsp;Summary 3 - Merge Summary 1 and Summary 2 using regular ChatGPT</label>
+        </div>              
       </div>
-      <div class="summary-radio-row">
-        <p-radiobutton name="summary" value="summary2" [(ngModel)]="summaryoption" inputId="summaryoption2" (onClick)="selectSummaryOption(summaryoption)"/>
-        <label for="summaryoption2">&nbsp;&nbsp;Summary 2 - Summarize the chapter part by part and merge</label>
+    }
+    @else {      
+      <div class="p-col-6-summary3">
+        <h4>🧪 Deep Analysis Summaries</h4>
+        <div class="summary-radio-row">
+          <p-radiobutton name="summary" value="summary1" [(ngModel)]="summaryoption" inputId="summaryoption1" (onClick)="selectSummaryOption(summaryoption)"/>
+          <label for="summaryoption1">&nbsp;&nbsp;Summary 1 - Summarize entire chapter using regular ChatGPT</label>
+        </div>
+        <div class="summary-radio-row">
+          <p-radiobutton name="summary" value="summary2" [(ngModel)]="summaryoption" inputId="summaryoption2" (onClick)="selectSummaryOption(summaryoption)"/>
+          <label for="summaryoption2">&nbsp;&nbsp;Summary 2 - Summarize the chapter part by part and merge</label>
+        </div>
+        <div class="summary-radio-row">
+          <p-radiobutton name="summary" value="summary3" [(ngModel)]="summaryoption" inputId="summaryoption3" (onClick)="selectSummaryOption(summaryoption)"/>
+          <label for="summaryoption3">&nbsp;&nbsp;Summary 3 - Merge Summary 1 and Summary 2 using regular ChatGPT</label>
+        </div>
       </div>
-      <div class="summary-radio-row">
-        <p-radiobutton name="summary" value="summary3" [(ngModel)]="summaryoption" inputId="summaryoption3" (onClick)="selectSummaryOption(summaryoption)"/>
-        <label for="summaryoption3">&nbsp;&nbsp;Summary 3 - Merge Summary 1 and Summary 2 using regular ChatGPT</label>
-      </div>
-    </div>
+    }
   }
+  
 
   <!-- Generate Summary Button -->
    @if (summaryoption === "summary1" || summaryoption === "summary2" || summaryoption === "summary3") {
@@ -109,18 +129,20 @@
         <p-button [raised]="true"
           label="Generate Summary" 
           icon="pi pi-clipboard" 
+          [disabled]="generatesummarydisable"
           (onClick)="generateSummary()" >
         </p-button>
+        <br>
       </div>
     </div>
   }
 
-  <br><br>  
+  <br><br>
   @if(generatesummary){
       @if((summaryoption === 'summary1' && summary1value === '') || ((summaryoption === 'summary2' && summary2value === ''))
         || ((summaryoption === 'summary3' && summary3value === ''))){
         <div style="display: flex; justify-content: center; align-items: center;">
-          <p-message severity="info">Fetching Summary from ChatGPT...</p-message>
+          <p-message severity="info">Fetching {{summary_display_text}} from ChatGPT...</p-message>
         </div>
         <br>
         <p-progress-spinner ariaLabel="loading" [style]="{ width: '40px', height: '40px' }"/>
@@ -130,38 +152,41 @@
           <p-message severity="success">Summary from ChatGPT</p-message>
         </div>
         <br>
-        @if(summaryoption === 'summary1'){
-          <textarea rows="15" cols="70" pTextarea [(ngModel)]="summary1value" readonly></textarea>
-        }
-        @else if(summaryoption === 'summary2'){
-          <textarea rows="15" cols="70" pTextarea [(ngModel)]="summary2value" readonly></textarea>
-        }
-        @else {
-          <div class="summaries-row">
-            <textarea rows="15" cols="70" pTextarea [(ngModel)]="summary1value" readonly></textarea>
-            <textarea rows="15" cols="70" pTextarea [(ngModel)]="summary2value" readonly></textarea>
-          </div>
-            <br><br>
-          <div class="third-summaries-row">
-            <textarea rows="15" cols="70" pTextarea [(ngModel)]="summary3value" readonly></textarea>
-          </div>
-          
-        }
-        <br><br>
-        <p-button [raised]="true"
-          label="Save Summary" 
-          icon="pi pi-save" 
-          (onClick)="saveSummary()" >
-        </p-button>
         }
         @if(!savedsummary){
           <p-progress-spinner ariaLabel="loading" [style]="{ width: '40px', height: '40px' }"/>
           <br>
         } 
         
-        <p-toast position="bottom-center" life="1000" />
-        
+        <p-toast position="bottom-center" life="1000" />        
   }
+
+  @if(summaryoption === 'summary1'){
+    <textarea rows="15" cols="70" pTextarea [(ngModel)]="summary1value" readonly></textarea>
+  }
+  @else if(summaryoption === 'summary2'){
+    <textarea rows="15" cols="70" pTextarea [(ngModel)]="summary2value" readonly></textarea>
+  }
+  @else if(summaryoption === 'summary3'){
+    <div class="summaries-row">
+      <textarea rows="15" cols="70" pTextarea [(ngModel)]="summary1value" readonly></textarea>
+      <textarea rows="15" cols="70" pTextarea [(ngModel)]="summary2value" readonly></textarea>
+    </div>
+      <br><br>
+    <div class="third-summaries-row">
+      <textarea rows="15" cols="70" pTextarea [(ngModel)]="summary3value" readonly></textarea>
+    </div>
+}
+
+@if(summaryoption != ''){
+  <br><br>
+    <p-button [raised]="true"
+      label="Save Summary" 
+      icon="pi pi-save" 
+      [disabled]="savesummaryenable"
+      (onClick)="saveSummary()" >
+    </p-button>
+}
   <br>
 </div>
 <br><br>
