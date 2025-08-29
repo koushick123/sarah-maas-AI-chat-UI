@@ -66,7 +66,7 @@ export class SummaryComponent {
   url: string = '';
   summary_request_payload: any = '';
   generatesummarydisable: boolean = false;
-  savesummaryenable: boolean = true;
+  savesummarydisable: boolean = false;
     
   constructor(private http: HttpClient, private messageService: MessageService) {}
 
@@ -77,9 +77,18 @@ export class SummaryComponent {
       this.summaryoption = '';
       this.generatesummary = false;
       this.fetchChapterNames();
+      this.resetSummaries();
     } else {
       this.chapters = [];
     }
+  }
+
+  resetSummaries(){
+    this.summary1value = '';
+    this.summary2value = '';
+    this.summary3value = '';
+    this.summary1empty = true;
+    this.summary2empty = true;
   }
 
   summary1empty: boolean = true;
@@ -116,6 +125,14 @@ export class SummaryComponent {
     else{
       if(this.summary1empty || this.summary2empty){
         this.fetchAllSummaries(this.summary_request_payload);
+      }
+      else{
+        const summaryNotFound: string = 'No chapter summaries found.';
+        if(this.summary3value == '' || this.summary3value == summaryNotFound){
+          //To enable spinner to be shown
+          this.summary3value = '';
+          this.fetchSavedSummary(this.summary_request_payload);
+        }
       }
     }
   }
@@ -304,6 +321,7 @@ export class SummaryComponent {
         "summary_option": this.summaryoption,
         "doc_id": this.doc_id
       };
+      this.resetSummaries();
       if(this.summaryoption == 'summary3'){
         this.fetchAllSummaries(summary_request_payload);
       }
@@ -413,18 +431,18 @@ export class SummaryComponent {
     };
     console.log("Payload = "+JSON.stringify(save_summary_payload));
     this.savedsummary = false;
-    this.savesummaryenable = false;
+    this.savesummarydisable = true;
     this.http.post<any>(this.BASE_URL+'/chapter/save', save_summary_payload)
       .subscribe({
         next: (message) => {
           console.log(message['message']);
           this.savedsummary = true;
-          this.savesummaryenable = true;
+          this.savesummarydisable = false;
           this.showSuccessMessage('Chapter Saved Successfully')
         },
         error: (err) => {
           this.savedsummary = true;
-          this.savesummaryenable = true;
+          this.savesummarydisable = false;
           this.showErrorMessage('Chapter Save Error',1000);
         }
       });
