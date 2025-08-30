@@ -83,6 +83,10 @@
     }
   </p-dialog>
 
+  </div>
+
+  <div class="main-grid-col-12-summary-1-2">
+
   <!-- Summary options -->
   @if(selectedChapter) {
     @if(summaryoption != 'summary3'){
@@ -102,9 +106,12 @@
         </div>              
       </div>
     }
-    @else {      
-      <div class="p-col-6-summary3">
+    @else {
+      <div class="col-12" [align]="'center'">
         <h4>🧪 Deep Analysis Summaries</h4>
+      </div>
+      <div class="p-col-6-summary3">
+        
         <div class="summary-radio-row">
           <p-radiobutton name="summary" value="summary1" [(ngModel)]="summaryoption" inputId="summaryoption1" (onClick)="selectSummaryOption(summaryoption)"/>
           <label for="summaryoption1">&nbsp;&nbsp;Summary 1 - Summarize entire chapter using regular ChatGPT</label>
@@ -146,12 +153,13 @@
         </div>
         <br>
         <p-progress-spinner ariaLabel="loading" [style]="{ width: '40px', height: '40px' }"/>
+        <br>
       }
       @else {
         <div style="display: flex; justify-content: center; align-items: center;">
           <p-message severity="success">Summary from ChatGPT</p-message>
         </div>
-        <br>
+        <br><br>
         }
         @if(!savedsummary){
           <p-progress-spinner ariaLabel="loading" [style]="{ width: '40px', height: '40px' }"/>
@@ -180,12 +188,14 @@
 
 @if(summaryoption != ''){
   <br><br>
+  <div class="col-12" [align]="'center'" >
     <p-button [raised]="true"
       label="Save Summary" 
       icon="pi pi-save" 
       [disabled]="savesummarydisable"
       (onClick)="saveSummary()" >
     </p-button>
+    </div>
 }
   <br>
 </div>
@@ -193,7 +203,7 @@
 <!-- Professional Footer -->
 <footer class="app-footer">
   <div class="footer-content">
-    <span>&copy; 2025 SarAIh Maas | Crescent City Series Analysis</span>
+    <span>&copy; 2025 SarAIh Maas | Crescent City Series Analysis&nbsp;&nbsp;</span>
     <span class="footer-links">
       <a href="https://github.com/koushick/sarah-maas-AI-chat-UI" target="_blank">GitHub</a>
     </span>
