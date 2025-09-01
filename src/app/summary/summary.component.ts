@@ -171,7 +171,7 @@ export class SummaryComponent {
         next: (summary) => {
           this.summary1value = summary['summary'];
           this.doc_id_summary_1 = summary['doc_id']
-          this.summary1empty = false;        
+          this.summary1empty = (this.doc_id_summary_1 == -1 ? true : false);
           console.log('Summary 1 :', summary);
           
           //Fetch summary 2 
@@ -185,7 +185,7 @@ export class SummaryComponent {
             next: (summary) => {
                 this.summary2value = summary['summary'];
                 this.doc_id_summary_2 = summary['doc_id']
-                this.summary2empty = false;
+                this.summary2empty = (this.doc_id_summary_2 == -1 ? true : false);
                 console.log('Summary 2 :', summary);
                 
                 //Fetch summary 3
@@ -198,7 +198,6 @@ export class SummaryComponent {
                 .subscribe({
                   next: (summary) => {
                     this.summary3value = summary['summary'];
-                    this.doc_id_summary_3 = summary['doc_id']
                     console.log('Summary 3 :', summary);
                   },
                     error: (err) => {
@@ -235,19 +234,20 @@ export class SummaryComponent {
 
   fetchSavedSummary(summary_request_payload: any){
     this.generatesummarydisable = true;
+    this.savesummarydisable = true;
     this.http.post<any>(this.BASE_URL+'/chapter/summaries', summary_request_payload)
       .subscribe({
         next: (summary) => {
           if(this.summaryoption == 'summary1'){
             this.summary1value = summary['summary'];
             this.doc_id_summary_1 = summary['doc_id']
-            this.summary1empty = false;
+            this.summary1empty = (this.doc_id_summary_1 == -1 ? true : false);
             console.log('Doc id Updated to :', this.doc_id_summary_1);
           }
           else if(this.summaryoption == 'summary2'){
             this.summary2value = summary['summary'];
             this.doc_id_summary_2 = summary['doc_id']
-            this.summary2empty = false;
+            this.summary2empty = (this.doc_id_summary_2 == -1 ? true : false);
             console.log('Doc id Updated to :', this.doc_id_summary_2);
           }
           else{
@@ -257,6 +257,7 @@ export class SummaryComponent {
           }
 
           this.generatesummarydisable = false;
+          this.savesummarydisable = false;
 
         },
         error: (err) => {
@@ -354,8 +355,7 @@ export class SummaryComponent {
       }
       else{
         summary_request_payload['doc_id'] = 
-          (this.summaryoption == 'summary1' ? this.doc_id_summary_1 : 
-          (this.summaryoption == 'summary2' ? this.doc_id_summary_2 : this.doc_id_summary_3));
+          (this.summaryoption == 'summary1' ? this.doc_id_summary_1 : this.doc_id_summary_2);
         this.fetchSavedSummary(summary_request_payload);
       }
     }
@@ -396,6 +396,7 @@ export class SummaryComponent {
     }
 
     this.generatesummarydisable = true;
+    this.savesummarydisable = true;
     this.generatesummary = true;
     if(this.summaryoption == 'summary1'){
       this.summary1value='';
@@ -429,6 +430,7 @@ export class SummaryComponent {
             this.selectedChapter = this.selectedChapter.replace("-"," ");
           }
           this.generatesummarydisable = false;
+          this.savesummarydisable = false;
         },
         error: (err) => {
           console.error('Error:', err);
@@ -442,6 +444,9 @@ export class SummaryComponent {
           else{
             this.summary3value=err;
           }
+
+          this.generatesummarydisable = false;
+          this.savesummarydisable = false;
         }
       });
   }
