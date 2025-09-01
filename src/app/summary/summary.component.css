@@ -72,6 +72,17 @@ html, body {
   gap: 50px; 
 }
 
+.summary-with-msg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;   /* center align both message + textarea */
+  width: 100%;
+}
+
+.summary-with-msg p-message {
+  margin-bottom: 10px;  /* spacing above textarea */
+}
+
 .third-summaries-row {
   display: flex;
   flex-direction: column;

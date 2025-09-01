@@ -177,13 +177,21 @@
   }
   @else if(summaryoption === 'summary3'){
     <div class="summaries-row">
-      <textarea rows="15" cols="70" pTextarea [(ngModel)]="summary1value" readonly></textarea>
-      <textarea rows="15" cols="70" pTextarea [(ngModel)]="summary2value" readonly></textarea>
+      <div class="summary-with-msg">
+        <p-message severity="info">Summary 1</p-message><br>
+        <textarea rows="15" cols="70" pTextarea [(ngModel)]="summary1value" readonly></textarea>
+      </div>
+
+      <div class="summary-with-msg">
+        <p-message severity="info">Summary 2</p-message><br>
+        <textarea rows="15" cols="70" pTextarea [(ngModel)]="summary2value" readonly></textarea>
+      </div>
     </div>
-      <br><br>
-    <div class="third-summaries-row">
-      <textarea rows="15" cols="70" pTextarea [(ngModel)]="summary3value" readonly></textarea>
-    </div>
+    <br><br>
+    <div class="summary-with-msg">
+        <p-message severity="info">Summary 3</p-message><br>
+        <textarea rows="15" cols="70" pTextarea [(ngModel)]="summary3value" readonly></textarea>
+      </div>
 }
 
 @if(summaryoption != ''){
