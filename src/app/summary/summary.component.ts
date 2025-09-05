@@ -85,6 +85,7 @@ export class SummaryComponent {
     }
   }
 
+  //Call this for change in book or part, do ensure all summaries are being refreshed.
   resetSummaries(){
     this.summary1value = '';
     this.summary2value = '';
@@ -233,6 +234,7 @@ export class SummaryComponent {
   }
 
   fetchSavedSummary(summary_request_payload: any){
+    console.log('summary_request_payload = '+JSON.stringify(summary_request_payload));
     this.generatesummarydisable = true;
     this.savesummarydisable = true;
     this.http.post<any>(this.BASE_URL+'/chapter/summaries', summary_request_payload)
@@ -327,6 +329,7 @@ export class SummaryComponent {
     this.selectedChapter = null;
     this.summaryoption = '';
     this.generatesummary = false;
+    this.resetSummaries();
     if (typeof (this.part_chapter_map.get(this.selectedPart)) != 'undefined'){
       const chaptersList = this.part_chapter_map.get(this.selectedPart);
       if (chaptersList) {
