@@ -15,6 +15,7 @@ import { MessageModule } from 'primeng/message';
 import { ScrollTopModule } from 'primeng/scrolltop';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 
 @Component({
   selector: 'app-summary',
@@ -33,8 +34,9 @@ import { MessageService } from 'primeng/api';
     ProgressSpinnerModule,
     MessageModule,
     ScrollTopModule,
-    ToastModule
-],
+    ToastModule,
+    ConfirmDialogModule
+  ],
   templateUrl: './summary.component.html',
   styleUrls: ['./summary.component.css']
 })
@@ -50,7 +52,7 @@ export class SummaryComponent {
   parts: any[] = [];
   selectedBook: string | null = null;
   selectedChapter: string | null = null;
-  summaryoption: string = '';    
+  summaryoption: string = '';
   chapterContent: string = '';
   displayDialog: boolean = false;
   part_chapter_map: Map<string, string[]> = new Map();
@@ -59,18 +61,23 @@ export class SummaryComponent {
   summary2value: string = '';
   summary3value: string = '';
   fetchedsummary: boolean = false;
-  BASE_URL: string = 'http://localhost:8000';
+  BASE_URL: string = 'http://localhost:9000';
   generatesummary: boolean = false;
-  doc_id_summary_1: number = -1;
-  doc_id_summary_2: number = -1;
-  doc_id_summary_3: number = -1;
-  dataFetch: boolean = false;
+  doc_id_summary_1: string = "-1";
+  doc_id_summary_2: string = "-1";
+  doc_id_summary_3: string = "-1";
+  dataFetchSummary: boolean = false;
+  dataFetchForPart: boolean = false;
+  dataFetchForChapter: boolean = false;
   url: string = '';
   summary_request_payload: any = '';
   generatesummarydisable: boolean = false;
   savesummarydisable: boolean = false;
-    
-  constructor(private http: HttpClient, private messageService: MessageService) {}
+  generateSummaryClicked: boolean = false;
+  askSummarySave: boolean = false;
+  askSummaryVisibility: boolean = false;
+
+  constructor(private http: HttpClient, private messageService: MessageService) { }
 
   onBookChange() {
     if (this.selectedBook !== null) {
@@ -86,15 +93,15 @@ export class SummaryComponent {
   }
 
   //Call this for change in book or part, do ensure all summaries are being refreshed.
-  resetSummaries(){
+  resetSummaries() {
     this.summary1value = '';
     this.summary2value = '';
     this.summary3value = '';
     this.summary1empty = true;
     this.summary2empty = true;
-    this.doc_id_summary_1 = -1;
-    this.doc_id_summary_2 = -1;
-    this.doc_id_summary_3 = -1;
+    this.doc_id_summary_1 = "-1";
+    this.doc_id_summary_2 = "-1";
+    this.doc_id_summary_3 = "-1";
   }
 
   summary1empty: boolean = true;
@@ -111,45 +118,45 @@ export class SummaryComponent {
       "summary_option": this.summaryoption,
       "doc_id": -1
     };
-    
-    if(this.summaryoption == 'summary1'){
+
+    if (this.summaryoption == 'summary1') {
       const summaryNotFound: string = 'No chapter summaries found.';
-      if(this.summary1value == '' || this.summary1value == summaryNotFound){
+      if (this.summary1value == '' || this.summary1value == summaryNotFound) {
         //To enable spinner to be shown
         this.summary1value = '';
         this.summary_request_payload['doc_id'] = this.doc_id_summary_1;
         this.fetchSavedSummary(this.summary_request_payload);
       }
-      else{
-        console.log('Doc id for summary 1 - '+this.doc_id_summary_1);
+      else {
+        console.log('Doc id for summary 1 - ' + this.doc_id_summary_1);
       }
     }
-    else if(this.summaryoption == 'summary2'){
+    else if (this.summaryoption == 'summary2') {
       const summaryNotFound: string = 'No chapter summaries found.';
-      if(this.summary2value == '' || this.summary2value == summaryNotFound){
+      if (this.summary2value == '' || this.summary2value == summaryNotFound) {
         //To enable spinner to be shown
         this.summary2value = '';
         this.summary_request_payload['doc_id'] = this.doc_id_summary_2;
         this.fetchSavedSummary(this.summary_request_payload);
       }
-      else{
-        console.log('Doc id for summary 2 - '+this.doc_id_summary_2);
+      else {
+        console.log('Doc id for summary 2 - ' + this.doc_id_summary_2);
       }
     }
-    else{
-      if(this.summary1empty || this.summary2empty){
+    else {
+      if (this.summary1empty || this.summary2empty) {
         this.fetchAllSummaries(this.summary_request_payload);
       }
-      else{
+      else {
         const summaryNotFound: string = 'No chapter summaries found.';
-        if(this.summary3value == '' || this.summary3value == summaryNotFound){
+        if (this.summary3value == '' || this.summary3value == summaryNotFound) {
           //To enable spinner to be shown
           this.summary3value = '';
           this.summary_request_payload['doc_id'] = this.doc_id_summary_3;
           this.fetchSavedSummary(this.summary_request_payload);
         }
-        else{
-          console.log('Doc id for summary 3 - '+this.doc_id_summary_3);
+        else {
+          console.log('Doc id for summary 3 - ' + this.doc_id_summary_3);
         }
       }
     }
@@ -157,75 +164,75 @@ export class SummaryComponent {
 
   originaloption: string = '';
 
-  fetchAllSummaries(summary_request_payload: any){
-    this.originaloption = this.summaryoption;  
-    
+  fetchAllSummaries(summary_request_payload: any) {
+    this.originaloption = this.summaryoption;
+
     //Fetch summary 1    
-    summary_request_payload['summary_option']='summary1';
+    summary_request_payload['summary_option'] = 'summary1';
     summary_request_payload['doc_id'] = this.doc_id_summary_1;
     this.summaryoption = 'summary1';
     this.summary_display_text = 'Summary 1';
     this.generatesummarydisable = true;
 
-    this.http.post<any>(this.BASE_URL+'/chapter/summaries', summary_request_payload)
+    this.http.post<any>(this.BASE_URL + '/chapter/summaries', summary_request_payload)
       .subscribe({
         next: (summary) => {
           this.summary1value = summary['summary'];
           this.doc_id_summary_1 = summary['doc_id']
-          this.summary1empty = (this.doc_id_summary_1 == -1 ? true : false);
+          this.summary1empty = (this.doc_id_summary_1 == "-1" ? true : false);
           console.log('Summary 1 :', summary);
-          
+
           //Fetch summary 2 
           summary_request_payload['doc_id'] = this.doc_id_summary_2;
-          summary_request_payload['summary_option']='summary2';
+          summary_request_payload['summary_option'] = 'summary2';
           this.summaryoption = 'summary2';
           this.summary_display_text = 'Summary 2';
 
-          this.http.post<any>(this.BASE_URL+'/chapter/summaries', summary_request_payload)
-          .subscribe({
-            next: (summary) => {
+          this.http.post<any>(this.BASE_URL + '/chapter/summaries', summary_request_payload)
+            .subscribe({
+              next: (summary) => {
                 this.summary2value = summary['summary'];
                 this.doc_id_summary_2 = summary['doc_id']
-                this.summary2empty = (this.doc_id_summary_2 == -1 ? true : false);
+                this.summary2empty = (this.doc_id_summary_2 == "-1" ? true : false);
                 console.log('Summary 2 :', summary);
-                
+
                 //Fetch summary 3
                 summary_request_payload['doc_id'] = this.doc_id_summary_3;
-                summary_request_payload['summary_option']='summary3';
+                summary_request_payload['summary_option'] = 'summary3';
                 this.summaryoption = 'summary3';
                 this.summary_display_text = 'Summary 3';
 
-                this.http.post<any>(this.BASE_URL+'/chapter/summaries', summary_request_payload)
-                .subscribe({
-                  next: (summary) => {
-                    this.summary3value = summary['summary'];
-                    console.log('Summary 3 :', summary);
-                  },
+                this.http.post<any>(this.BASE_URL + '/chapter/summaries', summary_request_payload)
+                  .subscribe({
+                    next: (summary) => {
+                      this.summary3value = summary['summary'];
+                      console.log('Summary 3 :', summary);
+                    },
                     error: (err) => {
-                    console.error('Error summary 3 :', err)
-                    this.summary3value = err;
-                  }
-                });
+                      console.error('Error summary 3 :', err)
+                      this.summary3value = err;
+                    }
+                  });
               },
               error: (err) => {
                 console.error('Error summary 2 :', err)
-                this.summary2value=err;
+                this.summary2value = err;
               }
-          });
+            });
           this.summaryoption = this.originaloption;
           this.generatesummarydisable = false;
-          console.log('Restore original option = '+this.originaloption);
+          console.log('Restore original option = ' + this.originaloption);
         },
         error: (err) => {
           console.error('Error:', err)
-          if(this.summaryoption == 'summary1'){
-            this.summary1value=err;
+          if (this.summaryoption == 'summary1') {
+            this.summary1value = err;
           }
-          else if(this.summaryoption == 'summary2'){
-            this.summary2value=err;
+          else if (this.summaryoption == 'summary2') {
+            this.summary2value = err;
           }
-          else{
-            this.summary3value=err;
+          else {
+            this.summary3value = err;
           }
           this.summaryoption = this.originaloption;
           this.generatesummarydisable = false;
@@ -233,26 +240,26 @@ export class SummaryComponent {
       });
   }
 
-  fetchSavedSummary(summary_request_payload: any){
-    console.log('summary_request_payload = '+JSON.stringify(summary_request_payload));
+  fetchSavedSummary(summary_request_payload: any) {
+    console.log('summary_request_payload = ' + JSON.stringify(summary_request_payload));
     this.generatesummarydisable = true;
     this.savesummarydisable = true;
-    this.http.post<any>(this.BASE_URL+'/chapter/summaries', summary_request_payload)
+    this.http.post<any>(this.BASE_URL + '/chapter/summaries', summary_request_payload)
       .subscribe({
         next: (summary) => {
-          if(this.summaryoption == 'summary1'){
+          if (this.summaryoption == 'summary1') {
             this.summary1value = summary['summary'];
             this.doc_id_summary_1 = summary['doc_id']
-            this.summary1empty = (this.doc_id_summary_1 == -1 ? true : false);
+            this.summary1empty = (this.doc_id_summary_1 == "-1" ? true : false);
             console.log('Doc id Updated to :', this.doc_id_summary_1);
           }
-          else if(this.summaryoption == 'summary2'){
+          else if (this.summaryoption == 'summary2') {
             this.summary2value = summary['summary'];
             this.doc_id_summary_2 = summary['doc_id']
-            this.summary2empty = (this.doc_id_summary_2 == -1 ? true : false);
+            this.summary2empty = (this.doc_id_summary_2 == "-1" ? true : false);
             console.log('Doc id Updated to :', this.doc_id_summary_2);
           }
-          else{
+          else {
             this.summary3value = summary['summary'];
             this.doc_id_summary_3 = summary['doc_id']
             console.log('Doc id Updated to :', this.doc_id_summary_3);
@@ -265,72 +272,77 @@ export class SummaryComponent {
         error: (err) => {
           console.error('Error:', err)
           this.generatesummarydisable = false;
-          if(this.summaryoption == 'summary1'){
-            this.summary1value=err;
+          if (this.summaryoption == 'summary1') {
+            this.summary1value = err;
           }
-          else if(this.summaryoption == 'summary2'){
-            this.summary2value=err;
+          else if (this.summaryoption == 'summary2') {
+            this.summary2value = err;
           }
-          else{
-            this.summary3value=err;
+          else {
+            this.summary3value = err;
           }
         }
       });
   }
 
   fetchChapterContent(selChapter: string) {
-    this.dataFetch = false;   
     this.displayDialog = true;
-    this.chapterContent = '';      
+    this.chapterContent = '';
     this.showChapterContent();
   }
 
-  selChapterWithHyphen: string|null = ''
+  selChapterWithHyphen: string | null = ''
 
-  showChapterContent(){
-    if(this.selectedChapter){
+  showChapterContent() {
+    if (this.selectedChapter) {
+      this.dataFetchForChapter = false;
       this.selChapterWithHyphen = this.selectedChapter;
-      this.url = this.BASE_URL+'/book/'+this.selectedBook+'/chapter/'+this.selChapterWithHyphen.replace(" ","-")+'/contents';
+      this.url = this.BASE_URL + '/book/' + this.selectedBook + '/chapter/' + this.selChapterWithHyphen.replace(" ", "-") + '/contents';
       console.log(this.url);
       this.http.get<string>(this.url)
         .subscribe({
-          next :(data) => {
-            this.dataFetch = true;
+          next: (data) => {
+            this.dataFetchForChapter = true;
             this.chapterContent = data;
           },
           error: (err) => {
-            this.dataFetch = true;
+            this.dataFetchForChapter = true;
             this.chapterContent = '';
           }
         });
     }
   }
 
-  onHideDialog(){
+  onHideDialog() {
     this.displayDialog = false;
     console.log(this.selectedChapter);
   }
-  
+
   fetchChapterNames() {
-    this.http.get<Map<string, string[]>>(this.BASE_URL+'/book/'+this.selectedBook+'/chapters')
+    this.dataFetchForPart = true;
+    this.http.get<Map<string, string[]>>(this.BASE_URL + '/book/' + this.selectedBook + '/chapters')
       .subscribe({
         next: (data) => {
           const sortedEntries = Object.entries(data).sort(([a], [b]) => a.localeCompare(b));
           this.part_chapter_map = new Map<string, string[]>(sortedEntries);
-          
+
           // Parts list
           this.parts = Array.from(this.part_chapter_map.keys());
+          this.dataFetchForPart = false;
         },
-        error: (err) => console.error('Error fetching chapters:', err)
+        error: (err) => {
+          console.error('Error fetching chapters:', err);
+          this.dataFetchForPart = false;
+        }
       });
   }
 
-  fetchChapterFromPart(){
+  fetchChapterFromPart() {
     this.selectedChapter = null;
     this.summaryoption = '';
     this.generatesummary = false;
     this.resetSummaries();
-    if (typeof (this.part_chapter_map.get(this.selectedPart)) != 'undefined'){
+    if (typeof (this.part_chapter_map.get(this.selectedPart)) != 'undefined') {
       const chaptersList = this.part_chapter_map.get(this.selectedPart);
       if (chaptersList) {
         this.chapters = chaptersList.map(chapter => ({
@@ -341,27 +353,42 @@ export class SummaryComponent {
     }
   }
 
-  updateSummary(){
-    if(this.summaryoption != ''){
-      // Update the summary for chapter change
-      const summary_request_payload = {
-        "book_name": this.selectedBook,
-        "part": this.selectedPart,
-        "chapter_name": this.selectedChapter,
-        "chapter_summary": '',
-        "summary_option": this.summaryoption,
-        "doc_id": -1
-      };
-      this.resetSummaries();
-      if(this.summaryoption == 'summary3'){
-        this.fetchAllSummaries(summary_request_payload);
-      }
-      else{
-        summary_request_payload['doc_id'] = 
-          (this.summaryoption == 'summary1' ? this.doc_id_summary_1 : this.doc_id_summary_2);
-        this.fetchSavedSummary(summary_request_payload);
+  updateSummary() {
+    if (this.summaryoption != '') {
+      //Check if user has cliked on Generate Summary and if yes ask if he wants to save the changes before changing to another chapter
+      if (this.generateSummaryClicked) {
+        this.showConfirmDialog();
       }
     }
+  }
+
+  resetSummary() {
+    // Update the summary for chapter change
+    const summary_request_payload = {
+      "book_name": this.selectedBook,
+      "part": this.selectedPart,
+      "chapter_name": this.selectedChapter,
+      "chapter_summary": '',
+      "summary_option": this.summaryoption,
+      "doc_id": "-1"
+    };
+    this.resetSummaries();
+    if (this.summaryoption == 'summary3') {
+      this.fetchAllSummaries(summary_request_payload);
+    }
+    else {
+      summary_request_payload['doc_id'] =
+        (this.summaryoption == 'summary1' ? this.doc_id_summary_1 : this.doc_id_summary_2);
+      this.fetchSavedSummary(summary_request_payload);
+    }
+  }
+
+  showConfirmDialog(){
+    this.askSummarySave = true;
+    this.askSummaryVisibility = true;
+  }
+  hideConfirmDialog(){
+    this.askSummaryVisibility = false;
   }
 
   summary_display_text = '';
@@ -369,83 +396,86 @@ export class SummaryComponent {
   generateSummary() {
 
     // Proceed to generate summary 3 only if summary 1 and summary 2 are present
-    if(this.summaryoption == 'summary3'){
+    if (this.summaryoption == 'summary3') {
       const summaryNotFound: string = 'No chapter summaries found.';
-      if((this.summary1value == '' || this.summary1value == summaryNotFound) ||
-        (this.summary2value == '' || this.summary2value == summaryNotFound)){
-          this.showErrorMessage('Either Summary 1 or Summary 2 or both are empty. Please generate their summaries.',2000);
-          return;
+      if ((this.summary1value == '' || this.summary1value == summaryNotFound) ||
+        (this.summary2value == '' || this.summary2value == summaryNotFound)) {
+        this.showErrorMessage('Either Summary 1 or Summary 2 or both are empty. Please generate their summaries.', 3000);
+        return;
       }
     }
 
-    if(this.selectedChapter){
-      this.selectedChapter = this.selectedChapter.replace(" ","-");
+    //Flag to track that user clicked on Generate Summary button
+    this.generateSummaryClicked = true;
+
+    if (this.selectedChapter) {
+      this.selectedChapter = this.selectedChapter.replace(" ", "-");
     }
 
-    if(this.chapterContent == '') {
-     this.showChapterContent(); 
+    if (this.chapterContent == '') {
+      this.showChapterContent();
     }
 
     const summary_request_payload = {
-        "book_name": this.selectedBook,
-        "part": this.selectedPart,
-        "chapter_name": this.selectedChapter,
-        "chapter_content": this.chapterContent,
-        "summary_option": this.summaryoption
-      };
+      "book_name": this.selectedBook,
+      "part": this.selectedPart,
+      "chapter_name": this.selectedChapter,
+      "chapter_content": this.chapterContent,
+      "summary_option": this.summaryoption
+    };
 
-    if(this.selectedChapter){
-      this.selectedChapter = this.selectedChapter.replace("-"," ");
+    if (this.selectedChapter) {
+      this.selectedChapter = this.selectedChapter.replace("-", " ");
     }
 
     this.generatesummarydisable = true;
     this.savesummarydisable = true;
     this.generatesummary = true;
-    if(this.summaryoption == 'summary1'){
-      this.summary1value='';
+    if (this.summaryoption == 'summary1') {
+      this.summary1value = '';
       this.summary_display_text = 'Summary 1';
       this.summary1empty = true;
     }
-    else if(this.summaryoption == 'summary2'){
-      this.summary2value='';
+    else if (this.summaryoption == 'summary2') {
+      this.summary2value = '';
       this.summary_display_text = 'Summary 2';
       this.summary2empty = true;
     }
-    else{
-      this.summary3value='';
+    else {
+      this.summary3value = '';
       this.summary_display_text = 'Summary 3';
     }
-    this.http.post<string>(this.BASE_URL+'/chapter/summary', summary_request_payload)
+    this.http.post<string>(this.BASE_URL + '/chapter/summary', summary_request_payload)
       .subscribe({
         next: (summary) => {
-          if(this.summaryoption == 'summary1'){
-            this.summary1value=summary;
+          if (this.summaryoption == 'summary1') {
+            this.summary1value = summary;
             this.summary1empty = false;
           }
-          else if(this.summaryoption == 'summary2'){
-            this.summary2value=summary;
+          else if (this.summaryoption == 'summary2') {
+            this.summary2value = summary;
             this.summary2empty = false;
           }
-          else{
-            this.summary3value=summary;
+          else {
+            this.summary3value = summary;
           }
-          if(this.selectedChapter){
-            this.selectedChapter = this.selectedChapter.replace("-"," ");
+          if (this.selectedChapter) {
+            this.selectedChapter = this.selectedChapter.replace("-", " ");
           }
           this.generatesummarydisable = false;
           this.savesummarydisable = false;
         },
         error: (err) => {
-          console.error('Error:', err);
+          console.error('Genrate Summary Error :', err);
           this.generatesummarydisable = false;
-          if(this.summaryoption == 'summary1'){
-            this.summary1value=err;
+          if (this.summaryoption == 'summary1') {
+            this.summary1value = this.errorMessage;
           }
-          else if(this.summaryoption == 'summary2'){
-            this.summary2value=err;
+          else if (this.summaryoption == 'summary2') {
+            this.summary2value = this.errorMessage;
           }
-          else{
-            this.summary3value=err;
+          else {
+            this.summary3value = this.errorMessage;
           }
 
           this.generatesummarydisable = false;
@@ -454,35 +484,40 @@ export class SummaryComponent {
       });
   }
 
+  errorMessage = "There was an error displaying the Summary information. Please try again later.";
   savedsummary = true;
   chapter_summary = '';
-  saveSummary(){
-    this.chapter_summary = (this.summaryoption == 'summary1' ? this.summary1value : (this.summaryoption == 'summary2' ? this.summary2value : 
-        this.summary3value));
+  saveSummary() {
+    this.chapter_summary = (this.summaryoption == 'summary1' ? this.summary1value : (this.summaryoption == 'summary2' ? this.summary2value :
+      this.summary3value));
     const save_summary_payload = {
       "book_name": this.selectedBook,
       "part": this.selectedPart,
       "chapter_name": this.selectedChapter,
       "chapter_summary": this.chapter_summary,
       "summary_option": this.summaryoption,
-      "doc_id": -1
+      "doc_id": "-1"
     };
+    if (this.chapter_summary == "No chapter summaries found.") {
+      this.showWarnMessage("No Chapter Summary Found to Save. Please Generate a Summary and click on Save.", 3000);
+      return;
+    }
     this.savedsummary = false;
     this.savesummarydisable = true;
-    save_summary_payload['doc_id'] = 
-          (this.summaryoption == 'summary1' ? this.doc_id_summary_1 : 
-          (this.summaryoption == 'summary2' ? this.doc_id_summary_2 : this.doc_id_summary_3));
-    console.log("Payload = "+JSON.stringify(save_summary_payload));
-    this.http.post<any>(this.BASE_URL+'/chapter/save', save_summary_payload)
+    save_summary_payload['doc_id'] =
+      (this.summaryoption == 'summary1' ? this.doc_id_summary_1 :
+        (this.summaryoption == 'summary2' ? this.doc_id_summary_2 : this.doc_id_summary_3));
+    console.log("Payload = " + JSON.stringify(save_summary_payload));
+    this.http.post<any>(this.BASE_URL + '/chapter/save', save_summary_payload)
       .subscribe({
         next: (message) => {
           console.log(message['message']);
           this.savedsummary = true;
           this.savesummarydisable = false;
-          if(this.summaryoption == 'summary1'){
+          if (this.summaryoption == 'summary1') {
             this.doc_id_summary_1 = message['doc_id'];
           }
-          else if(this.summaryoption == 'summary2'){
+          else if (this.summaryoption == 'summary2') {
             this.doc_id_summary_2 = message['doc_id'];
           }
           else {
@@ -493,12 +528,12 @@ export class SummaryComponent {
         error: (err) => {
           this.savedsummary = true;
           this.savesummarydisable = false;
-          this.showErrorMessage('Chapter Save Error',1000);
+          this.showErrorMessage('Chapter Save Error', 1000);
         }
       });
   }
 
-  showSuccessMessage(message: string){
+  showSuccessMessage(message: string) {
     this.messageService.add({
       severity: 'success',
       summary: 'Success',
@@ -506,7 +541,16 @@ export class SummaryComponent {
     });
   }
 
-  showErrorMessage(message: string, durationInms: number){
+  showWarnMessage(message: string, durationInms: number) {
+    this.messageService.add({
+      severity: 'warn',
+      summary: 'Warning',
+      detail: message,
+      life: durationInms
+    });
+  }
+
+  showErrorMessage(message: string, durationInms: number) {
     this.messageService.add({
       severity: 'error',
       summary: 'Error',
@@ -514,20 +558,21 @@ export class SummaryComponent {
       life: durationInms
     });
   }
-//   simulateDelay() {
-//   console.log("⏳ Waiting 2 seconds...");
-//   setTimeout(() => {
-//     console.log("✅ Delay complete!");
-//     const save_summary_payload = {
-//       "book_name": this.selectedBook,
-//       "part": this.selectedPart,
-//       "chapter_name": this.selectedChapter,
-//       "chapter_summary": this.summaryvalue,
-//       "summary_option": this.summaryoption,
-//       "doc_id": this.doc_id
-//     };
-    
-//     // Do something here (e.g., fetch data, update UI)
-//   }, 2000); // 2000 ms = 2 seconds
-// }
+
+  //   simulateDelay() {
+  //   console.log("⏳ Waiting 2 seconds...");
+  //   setTimeout(() => {
+  //     console.log("✅ Delay complete!");
+  //     const save_summary_payload = {
+  //       "book_name": this.selectedBook,
+  //       "part": this.selectedPart,
+  //       "chapter_name": this.selectedChapter,
+  //       "chapter_summary": this.summaryvalue,
+  //       "summary_option": this.summaryoption,
+  //       "doc_id": this.doc_id
+  //     };
+
+  //     // Do something here (e.g., fetch data, update UI)
+  //   }, 2000); // 2000 ms = 2 seconds
+  // }
 }

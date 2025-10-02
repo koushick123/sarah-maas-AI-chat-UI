@@ -1,219 +1,231 @@
-<div [align]="'center'" class="main-grid-col-12">
-    <!-- Logo -->
-  <div class="p-text-center">
-    <img src="assets/SarAIh_Maas_V2.png" alt="Sarah Maas" width="270">
+<body>
+  <!-- Logo -->
+  <div class="logo-content">
+    <p class="align: center">
+      <img src="assets/SarAIh_Maas_V2.png" alt="Sarah Maas" width="270">
+    </p>
     <h5>SarAIh Maas can give you detailed analysis on the Crescent City series of Sarah Maas Books</h5>
   </div>
 
-  <!-- Chapter selection -->
-  <div class="chapter-col">
-    <p-select 
-        [options]="books" 
-        [(ngModel)]="selectedBook"
-        placeholder="Select a Book"
-        (onChange)="onBookChange()">
-    </p-select>
-    
-  <br>
-  <!--Part List-->
-    <div>
-    @if (selectedBook) {
-      <p-select 
-          [options]="parts" 
-          [(ngModel)]="selectedPart"
-          (onChange)="fetchChapterFromPart()"
-          placeholder="Select a Part">
+  <div [align]="'center'">
+    <!-- Chapter selection -->
+    <div class="chapter-col">
+      <p-select [options]="books" [(ngModel)]="selectedBook" placeholder="Select a Book" (onChange)="onBookChange()">
       </p-select>
-    }
     </div>
-    <br>
-    <!--Chapter List-->    
-      @if (selectedBook && selectedPart && !selectedChapter) {
-        <div class="chapter-row">
-          <p-select 
-              [options]="chapters" 
-              [(ngModel)]="selectedChapter"
+
+    <!--Confirm dialog box to ask if user wants to save Summary before proceeding to change book/part/chapter-->
+    @if(askSummarySave){
+    <p-toast />
+    <p-confirmdialog closeOnEscape="false" visible="[askSummaryVisibility]"/>
+    <p-button label="Proceed" severity="danger" [outlined]="true" />
+    <p-button (click)="hideConfirmDialog()" label="Stay Here" [outlined]="true" />
+    }
+
+    <div class="page-wrapper">
+      <div class="content">
+        <div [align]="'center'" class="main-grid-col-12">
+          <br>
+          <!--Part List-->
+          <div>
+            @if (selectedBook) {
+            @if(dataFetchForPart){
+            <div class="block">
+              <label class="font-color: solid rgb(100,0,0);">Fetching Parts from the Book...</label>
+              <br><br>
+              <p-progress-spinner ariaLabel="loading" [style]="{ width: '40px', height: '30px' }" />
+            </div>
+            }
+            @else {
+            <p-select [options]="parts" [(ngModel)]="selectedPart" (onChange)="fetchChapterFromPart()"
+              placeholder="Select a Part">
+            </p-select>
+            }
+            }
+          </div>
+          <br>
+          <!--Chapter List-->
+          @if (selectedBook && selectedPart && !selectedChapter) {
+          <div class="chapter-row">
+            <p-select [options]="chapters" [(ngModel)]="selectedChapter" placeholder="Select a Chapter">
+            </p-select>
+          </div>
+          }
+
+          @if (selectedBook && selectedPart && selectedChapter) {
+          <div class="chapter-row-with-button">
+            <p-select [options]="chapters" [(ngModel)]="selectedChapter" (onChange)="updateSummary()"
               placeholder="Select a Chapter">
-          </p-select>
-        </div>
-      }
+            </p-select>
 
-      @if (selectedBook && selectedPart && selectedChapter) {
-        <div class="chapter-row-with-button">
-          <p-select 
-            [options]="chapters" 
-            [(ngModel)]="selectedChapter"
-            (onChange)="updateSummary()"
-            placeholder="Select a Chapter">
-          </p-select>
-          
-          <p-button [raised]="true"
-            label="Show Entire Chapter"
-            icon="pi pi-book" 
-            (onClick)="fetchChapterContent(selectedChapter)">
-          </p-button>
+            <p-button [raised]="true" label="Show Entire Chapter" icon="pi pi-book"
+              (onClick)="fetchChapterContent(selectedChapter)">
+            </p-button>
+          </div>
+          }
         </div>
-      }    
-  </div>
 
-  <p-dialog
-    [header]="'Chapter Summary - ' + selectedChapter"
-    [modal]="true"
-    [style]="{width: '40vw', height: '35vw'}"
-    [closable]="true"
-    [(visible)]="displayDialog"
-    (onHide)="onHideDialog()">
-    @if (!dataFetch) {
-      <div class="block">
-        <label class="font-color: solid rgb(100,0,0);">Fetching Summary...</label>
+        <p-dialog [header]="'Chapter Content - ' + selectedChapter" [modal]="true"
+          [style]="{width: '40vw', height: '35vw'}" [closable]="true" [(visible)]="displayDialog"
+          (onHide)="onHideDialog()">
+          @if (!dataFetchForChapter) {
+          <div class="block">
+            <label class="font-color: solid rgb(100,0,0);">Fetching Summary...</label>
+            <br><br>
+            <p-progress-spinner ariaLabel="loading" [style]="{ width: '40px', height: '30px' }" />
+          </div>
+          }
+          @if (chapterContent != '') {
+          <p align="left">
+            {{chapterContent}}
+          </p>
+          <p-scrolltop target="parent" styleClass="custom-scrolltop" icon="pi pi-arrow-up" />
+          }
+          @else if (chapterContent === '' && dataFetchForChapter) {
+          <p-message severity="error">
+            No Summary Available!!
+          </p-message>
+          }
+        </p-dialog>
+
+      </div>
+
+      <div class="main-grid-col-12-summary-1-2">
+
+        <!-- Summary options -->
+        @if(selectedChapter) {
+        @if(summaryoption != 'summary3'){
+        <div class="p-col-6">
+          <h4>🧪 Deep Analysis Summaries</h4>
+          <div class="summary-radio-row">
+            <p-radiobutton name="summary" value="summary1" [(ngModel)]="summaryoption" inputId="summaryoption1"
+              (onClick)="selectSummaryOption(summaryoption)" />
+            <label for="summaryoption1">&nbsp;&nbsp;Summary 1 - Summarize entire chapter using regular ChatGPT</label>
+          </div>
+          <div class="summary-radio-row">
+            <p-radiobutton name="summary" value="summary2" [(ngModel)]="summaryoption" inputId="summaryoption2"
+              (onClick)="selectSummaryOption(summaryoption)" />
+            <label for="summaryoption2">&nbsp;&nbsp;Summary 2 - Summarize the chapter part by part and merge</label>
+          </div>
+          <div class="summary-radio-row">
+            <p-radiobutton name="summary" value="summary3" [(ngModel)]="summaryoption" inputId="summaryoption3"
+              (onClick)="selectSummaryOption(summaryoption)" />
+            <label for="summaryoption3">&nbsp;&nbsp;Summary 3 - Merge Summary 1 and Summary 2 using regular
+              ChatGPT</label>
+          </div>
+        </div>
+        }
+        @else {
+        <div class="col-12" [align]="'center'">
+          <h4>🧪 Deep Analysis Summaries</h4>
+        </div>
+        <div class="p-col-6-summary3">
+
+          <div class="summary-radio-row">
+            <p-radiobutton name="summary" value="summary1" [(ngModel)]="summaryoption" inputId="summaryoption1"
+              (onClick)="selectSummaryOption(summaryoption)" />
+            <label for="summaryoption1">&nbsp;&nbsp;Summary 1 - Summarize entire chapter using regular ChatGPT</label>
+          </div>
+          <div class="summary-radio-row">
+            <p-radiobutton name="summary" value="summary2" [(ngModel)]="summaryoption" inputId="summaryoption2"
+              (onClick)="selectSummaryOption(summaryoption)" />
+            <label for="summaryoption2">&nbsp;&nbsp;Summary 2 - Summarize the chapter part by part and merge</label>
+          </div>
+          <div class="summary-radio-row">
+            <p-radiobutton name="summary" value="summary3" [(ngModel)]="summaryoption" inputId="summaryoption3"
+              (onClick)="selectSummaryOption(summaryoption)" />
+            <label for="summaryoption3">&nbsp;&nbsp;Summary 3 - Merge Summary 1 and Summary 2 using regular
+              ChatGPT</label>
+          </div>
+        </div>
+        }
+        }
+
+
+        <!-- Generate Summary Button -->
+        @if (summaryoption === "summary1" || summaryoption === "summary2" || summaryoption === "summary3") {
+        <div class="col-12" [align]="'center'" style="margin-top: 20px;">
+          <div>
+            <p-button [raised]="true" label="Generate Summary" icon="pi pi-clipboard"
+              [disabled]="generatesummarydisable" (onClick)="generateSummary()">
+            </p-button>
+            <br>
+          </div>
+        </div>
+        }
+
         <br><br>
-        <p-progress-spinner ariaLabel="loading" [style]="{ width: '40px', height: '30px' }"/>
-      </div>      
-    }
-    @if (chapterContent != '') {
-    <p align="left">
-      {{chapterContent}}
-    </p>
-      <p-scrolltop target="parent" styleClass="custom-scrolltop" icon="pi pi-arrow-up" />
-    }
-    @else if (chapterContent === '' && dataFetch) {
-      <p-message severity="error"> 
-        No Summary Available!!
-      </p-message>
-    }
-  </p-dialog>
-
-  </div>
-
-  <div class="main-grid-col-12-summary-1-2">
-
-  <!-- Summary options -->
-  @if(selectedChapter) {
-    @if(summaryoption != 'summary3'){
-      <div class="p-col-6">
-        <h4>🧪 Deep Analysis Summaries</h4>
-        <div class="summary-radio-row">
-          <p-radiobutton name="summary" value="summary1" [(ngModel)]="summaryoption" inputId="summaryoption1" (onClick)="selectSummaryOption(summaryoption)"/>
-          <label for="summaryoption1">&nbsp;&nbsp;Summary 1 - Summarize entire chapter using regular ChatGPT</label>
-        </div>
-        <div class="summary-radio-row">
-          <p-radiobutton name="summary" value="summary2" [(ngModel)]="summaryoption" inputId="summaryoption2" (onClick)="selectSummaryOption(summaryoption)"/>
-          <label for="summaryoption2">&nbsp;&nbsp;Summary 2 - Summarize the chapter part by part and merge</label>
-        </div>
-        <div class="summary-radio-row">
-          <p-radiobutton name="summary" value="summary3" [(ngModel)]="summaryoption" inputId="summaryoption3" (onClick)="selectSummaryOption(summaryoption)"/>
-          <label for="summaryoption3">&nbsp;&nbsp;Summary 3 - Merge Summary 1 and Summary 2 using regular ChatGPT</label>
-        </div>              
-      </div>
-    }
-    @else {
-      <div class="col-12" [align]="'center'">
-        <h4>🧪 Deep Analysis Summaries</h4>
-      </div>
-      <div class="p-col-6-summary3">
-        
-        <div class="summary-radio-row">
-          <p-radiobutton name="summary" value="summary1" [(ngModel)]="summaryoption" inputId="summaryoption1" (onClick)="selectSummaryOption(summaryoption)"/>
-          <label for="summaryoption1">&nbsp;&nbsp;Summary 1 - Summarize entire chapter using regular ChatGPT</label>
-        </div>
-        <div class="summary-radio-row">
-          <p-radiobutton name="summary" value="summary2" [(ngModel)]="summaryoption" inputId="summaryoption2" (onClick)="selectSummaryOption(summaryoption)"/>
-          <label for="summaryoption2">&nbsp;&nbsp;Summary 2 - Summarize the chapter part by part and merge</label>
-        </div>
-        <div class="summary-radio-row">
-          <p-radiobutton name="summary" value="summary3" [(ngModel)]="summaryoption" inputId="summaryoption3" (onClick)="selectSummaryOption(summaryoption)"/>
-          <label for="summaryoption3">&nbsp;&nbsp;Summary 3 - Merge Summary 1 and Summary 2 using regular ChatGPT</label>
-        </div>
-      </div>
-    }
-  }
-  
-
-  <!-- Generate Summary Button -->
-   @if (summaryoption === "summary1" || summaryoption === "summary2" || summaryoption === "summary3") {
-    <div class="col-12" [align]="'center'" style="margin-top: 20px;">
-      <div>
-        <p-button [raised]="true"
-          label="Generate Summary" 
-          icon="pi pi-clipboard" 
-          [disabled]="generatesummarydisable"
-          (onClick)="generateSummary()" >
-        </p-button>
-        <br>
-      </div>
-    </div>
-  }
-
-  <br><br>
-  @if(generatesummary){
-      @if((summaryoption === 'summary1' && summary1value === '') || ((summaryoption === 'summary2' && summary2value === ''))
+        @if(generatesummary){
+        @if((summaryoption === 'summary1' && summary1value === '') || ((summaryoption === 'summary2' && summary2value
+        === ''))
         || ((summaryoption === 'summary3' && summary3value === ''))){
         <div style="display: flex; justify-content: center; align-items: center;">
           <p-message severity="info">Fetching {{summary_display_text}} from ChatGPT...</p-message>
         </div>
         <br>
-        <p-progress-spinner ariaLabel="loading" [style]="{ width: '40px', height: '40px' }"/>
+        <p-progress-spinner ariaLabel="loading" [style]="{ width: '40px', height: '40px' }" />
         <br>
-      }
-      @else {
+        }
+        @else {
         <div style="display: flex; justify-content: center; align-items: center;">
           <p-message severity="success">Summary from ChatGPT</p-message>
         </div>
         <br><br>
         }
         @if(!savedsummary){
-          <p-progress-spinner ariaLabel="loading" [style]="{ width: '40px', height: '40px' }"/>
-          <br>
-        } 
-        
-        <p-toast position="bottom-center" life="1000" />        
-  }
+        <p-progress-spinner ariaLabel="loading" [style]="{ width: '40px', height: '40px' }" />
+        <br>
+        }
 
-  @if(summaryoption === 'summary1'){
-    <textarea rows="15" cols="70" pTextarea [(ngModel)]="summary1value" readonly></textarea>
-  }
-  @else if(summaryoption === 'summary2'){
-    <textarea rows="15" cols="70" pTextarea [(ngModel)]="summary2value" readonly></textarea>
-  }
-  @else if(summaryoption === 'summary3'){
-    <div class="summaries-row">
-      <div class="summary-with-msg">
-        <p-message severity="info">Summary 1</p-message><br>
+        <p-toast position="bottom-center" life="1000" />
+        }
+
+        @if(summaryoption === 'summary1'){
         <textarea rows="15" cols="70" pTextarea [(ngModel)]="summary1value" readonly></textarea>
-      </div>
-
-      <div class="summary-with-msg">
-        <p-message severity="info">Summary 2</p-message><br>
+        }
+        @else if(summaryoption === 'summary2'){
         <textarea rows="15" cols="70" pTextarea [(ngModel)]="summary2value" readonly></textarea>
-      </div>
-    </div>
-    <br><br>
-    <div class="summary-with-msg">
-        <p-message severity="info">Summary 3</p-message><br>
-        <textarea rows="15" cols="70" pTextarea [(ngModel)]="summary3value" readonly></textarea>
-      </div>
-}
+        }
+        @else if(summaryoption === 'summary3'){
+        <div class="summaries-row">
+          <div class="summary-with-msg">
+            <p-message severity="info">Summary 1</p-message><br>
+            <textarea rows="15" cols="70" pTextarea [(ngModel)]="summary1value" readonly></textarea>
+          </div>
 
-@if(summaryoption != ''){
-  <br><br>
-  <div class="col-12" [align]="'center'" >
-    <p-button [raised]="true"
-      label="Save Summary" 
-      icon="pi pi-save" 
-      [disabled]="savesummarydisable"
-      (onClick)="saveSummary()" >
-    </p-button>
+          <div class="summary-with-msg">
+            <p-message severity="info">Summary 2</p-message><br>
+            <textarea rows="15" cols="70" pTextarea [(ngModel)]="summary2value" readonly></textarea>
+          </div>
+        </div>
+        <br><br>
+        <div class="summary-with-msg">
+          <p-message severity="info">Summary 3</p-message><br>
+          <textarea rows="15" cols="70" pTextarea [(ngModel)]="summary3value" readonly></textarea>
+        </div>
+        }
+
+        @if(summaryoption != ''){
+        <br><br>
+        <div class="col-12" [align]="'center'">
+          <p-button [raised]="true" label="Save Summary" icon="pi pi-save" [disabled]="savesummarydisable"
+            (onClick)="saveSummary()">
+          </p-button>
+        </div>
+        }
+        <br>
+      </div>
+      <br><br>
     </div>
-}
-  <br>
-</div>
-<br><br>
-<!-- Professional Footer -->
-<footer class="app-footer">
-  <div class="footer-content">
-    <span>&copy; 2025 SarAIh Maas | Crescent City Series Analysis&nbsp;&nbsp;</span>
-    <span class="footer-links">
-      <a href="https://github.com/koushick123/sarah-maas-AI-chat-UI" target="_blank">GitHub</a>
-    </span>
   </div>
-</footer>
+  <!-- Professional Footer -->
+
+  <footer class="app-footer">
+    <div class="footer-content">
+      <span>&copy; 2025 SarAIh Maas | Crescent City Series Analysis&nbsp;&nbsp;</span>
+      <span class="footer-links">
+        <a href="https://github.com/koushick123/sarah-maas-AI-chat-UI" target="_blank">GitHub</a>
+      </span>
+    </div>
+  </footer>
+</body>
