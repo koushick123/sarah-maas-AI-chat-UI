@@ -15,12 +15,7 @@
     </div>
 
     <!--Confirm dialog box to ask if user wants to save Summary before proceeding to change book/part/chapter-->
-    @if(askSummarySave){
-    <p-toast />
-    <p-confirmdialog closeOnEscape="false" visible="[askSummaryVisibility]"/>
-    <p-button label="Proceed" severity="danger" [outlined]="true" />
-    <p-button (click)="hideConfirmDialog()" label="Stay Here" [outlined]="true" />
-    }
+    <p-confirmDialog></p-confirmDialog>
 
     <div class="page-wrapper">
       <div class="content">
@@ -175,9 +170,7 @@
         @if(!savedsummary){
         <p-progress-spinner ariaLabel="loading" [style]="{ width: '40px', height: '40px' }" />
         <br>
-        }
-
-        <p-toast position="bottom-center" life="1000" />
+        }        
         }
 
         @if(summaryoption === 'summary1'){
@@ -213,6 +206,7 @@
           </p-button>
         </div>
         }
+        <p-toast position="bottom-center" life="1000" />
         <br>
       </div>
       <br><br>

@@ -14,13 +14,13 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { MessageModule } from 'primeng/message';
 import { ScrollTopModule } from 'primeng/scrolltop';
 import { ToastModule } from 'primeng/toast';
-import { MessageService } from 'primeng/api';
+import { MessageService, ConfirmationService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 
 @Component({
   selector: 'app-summary',
   standalone: true,
-  providers: [MessageService],
+  providers: [MessageService, ConfirmationService],
   imports: [
     FormsModule,
     HttpClientModule,
@@ -76,8 +76,9 @@ export class SummaryComponent {
   generateSummaryClicked: boolean = false;
   askSummarySave: boolean = false;
   askSummaryVisibility: boolean = false;
+  previousChapter: string | null = null;
 
-  constructor(private http: HttpClient, private messageService: MessageService) { }
+  constructor(private http: HttpClient, private messageService: MessageService, private confirmationService: ConfirmationService) { }
 
   onBookChange() {
     if (this.selectedBook !== null) {
@@ -211,12 +212,14 @@ export class SummaryComponent {
                     error: (err) => {
                       console.error('Error summary 3 :', err)
                       this.summary3value = err;
+                      this.showErrorMessage("There was an error loading the Chapter's Summary 3. Please try again later.",3000);
                     }
                   });
               },
               error: (err) => {
                 console.error('Error summary 2 :', err)
                 this.summary2value = err;
+                this.showErrorMessage("There was an error loading the Chapter's Summary 2. Please try again later.",3000);
               }
             });
           this.summaryoption = this.originaloption;
@@ -236,6 +239,7 @@ export class SummaryComponent {
           }
           this.summaryoption = this.originaloption;
           this.generatesummarydisable = false;
+          this.showErrorMessage("There was an error loading the Chapter's Summary 1. Please try again later.",3000);
         }
       });
   }
@@ -304,10 +308,12 @@ export class SummaryComponent {
           next: (data) => {
             this.dataFetchForChapter = true;
             this.chapterContent = data;
+            this.fetchSummaryFromAI();
           },
           error: (err) => {
             this.dataFetchForChapter = true;
             this.chapterContent = '';
+            this.showErrorMessage("There was an error fetching Summary. Please try again later.",3000);
           }
         });
     }
@@ -333,6 +339,7 @@ export class SummaryComponent {
         error: (err) => {
           console.error('Error fetching chapters:', err);
           this.dataFetchForPart = false;
+          this.showErrorMessage("There was an error loading the Chapters. Please try again later.",3000);
         }
       });
   }
@@ -354,15 +361,25 @@ export class SummaryComponent {
   }
 
   updateSummary() {
+    if(this.previousChapter == null){
+      this.previousChapter = this.selectedChapter;
+    }
     if (this.summaryoption != '') {
+      console.log('Generate summary clicked = '+this.generateSummaryClicked);
       //Check if user has cliked on Generate Summary and if yes ask if he wants to save the changes before changing to another chapter
       if (this.generateSummaryClicked) {
-        this.showConfirmDialog();
+        this.showConfirmDialogForSummaryChange();
+      }
+      else{
+        this.previousChapter = this.selectedChapter;
+        this.resetSummary();
       }
     }
   }
 
   resetSummary() {
+    //Reset generateSummaryClicked flag and hide dialog
+    this.generateSummaryClicked = false;
     // Update the summary for chapter change
     const summary_request_payload = {
       "book_name": this.selectedBook,
@@ -383,18 +400,9 @@ export class SummaryComponent {
     }
   }
 
-  showConfirmDialog(){
-    this.askSummarySave = true;
-    this.askSummaryVisibility = true;
-  }
-  hideConfirmDialog(){
-    this.askSummaryVisibility = false;
-  }
-
   summary_display_text = '';
 
   generateSummary() {
-
     // Proceed to generate summary 3 only if summary 1 and summary 2 are present
     if (this.summaryoption == 'summary3') {
       const summaryNotFound: string = 'No chapter summaries found.';
@@ -415,7 +423,12 @@ export class SummaryComponent {
     if (this.chapterContent == '') {
       this.showChapterContent();
     }
+    else{
+      this.fetchSummaryFromAI();
+    }
+  }
 
+  fetchSummaryFromAI(){
     const summary_request_payload = {
       "book_name": this.selectedBook,
       "part": this.selectedPart,
@@ -445,6 +458,7 @@ export class SummaryComponent {
       this.summary3value = '';
       this.summary_display_text = 'Summary 3';
     }
+    console.log('Payload for generate summary = '+JSON.stringify(summary_request_payload));
     this.http.post<string>(this.BASE_URL + '/chapter/summary', summary_request_payload)
       .subscribe({
         next: (summary) => {
@@ -480,6 +494,7 @@ export class SummaryComponent {
 
           this.generatesummarydisable = false;
           this.savesummarydisable = false;
+          this.showErrorMessage('There was an error generating Summary. Please try again later.', 3000);
         }
       });
   }
@@ -559,20 +574,20 @@ export class SummaryComponent {
     });
   }
 
-  //   simulateDelay() {
-  //   console.log("⏳ Waiting 2 seconds...");
-  //   setTimeout(() => {
-  //     console.log("✅ Delay complete!");
-  //     const save_summary_payload = {
-  //       "book_name": this.selectedBook,
-  //       "part": this.selectedPart,
-  //       "chapter_name": this.selectedChapter,
-  //       "chapter_summary": this.summaryvalue,
-  //       "summary_option": this.summaryoption,
-  //       "doc_id": this.doc_id
-  //     };
-
-  //     // Do something here (e.g., fetch data, update UI)
-  //   }, 2000); // 2000 ms = 2 seconds
-  // }
+  showConfirmDialogForSummaryChange(){
+    this.confirmationService.confirm({
+     message: 'Summary has been updated for '+this.previousChapter+'. Switching to another Chapter would cause you to lose the updated Summary. '+
+     'Would you like to proceed?',
+     header: 'Confirm Save Summary Update',
+     closeOnEscape: false,
+     icon: 'pi pi-exclamation-triangle',
+     accept: () => 
+      {
+        this.generateSummaryClicked = false;
+        this.resetSummary(); 
+      },
+     acceptLabel: 'Proceed',
+     rejectLabel: 'Cancel'
+   });
+  }
 }
