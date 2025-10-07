@@ -42,14 +42,14 @@
           <!--Chapter List-->
           @if (selectedBook && selectedPart && !selectedChapter) {
           <div class="chapter-row">
-            <p-select [options]="chapters" [(ngModel)]="selectedChapter" placeholder="Select a Chapter">
+            <p-select [options]="chapters" [(ngModel)]="selectedChapter" placeholder="Select a Chapter" (onChange)="selectChapter()">
             </p-select>
           </div>
           }
 
           @if (selectedBook && selectedPart && selectedChapter) {
           <div class="chapter-row-with-button">
-            <p-select [options]="chapters" [(ngModel)]="selectedChapter" (onChange)="updateSummary()"
+            <p-select [options]="chapters" [(ngModel)]="selectedChapter" (onChange)="updateSummaryOnChapterChange()"
               placeholder="Select a Chapter">
             </p-select>
 
@@ -152,8 +152,7 @@
         <br><br>
         @if(generatesummary){
         @if((summaryoption === 'summary1' && summary1value === '') || ((summaryoption === 'summary2' && summary2value
-        === ''))
-        || ((summaryoption === 'summary3' && summary3value === ''))){
+        === '')) || ((summaryoption === 'summary3' && summary3value === ''))){
         <div style="display: flex; justify-content: center; align-items: center;">
           <p-message severity="info">Fetching {{summary_display_text}} from ChatGPT...</p-message>
         </div>

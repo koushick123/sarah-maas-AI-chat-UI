@@ -73,7 +73,9 @@ export class SummaryComponent {
   summary_request_payload: any = '';
   generatesummarydisable: boolean = false;
   savesummarydisable: boolean = false;
-  generateSummaryClicked: boolean = false;
+  generateSummary1Clicked: boolean = false;
+  generateSummary2Clicked: boolean = false;
+  generateSummary3Clicked: boolean = false;
   askSummarySave: boolean = false;
   askSummaryVisibility: boolean = false;
   previousChapter: string | null = null;
@@ -308,7 +310,6 @@ export class SummaryComponent {
           next: (data) => {
             this.dataFetchForChapter = true;
             this.chapterContent = data;
-            this.fetchSummaryFromAI();
           },
           error: (err) => {
             this.dataFetchForChapter = true;
@@ -317,6 +318,24 @@ export class SummaryComponent {
           }
         });
     }
+  }
+
+  updateChapterContentOnChapterChange(){
+    if (this.selectedChapter) {
+    this.selChapterWithHyphen = this.selectedChapter;
+    this.url = this.BASE_URL + '/book/' + this.selectedBook + '/chapter/' + this.selChapterWithHyphen.replace(" ", "-") + '/contents';
+      console.log(this.url);
+      this.http.get<string>(this.url)
+        .subscribe({
+          next: (data) => {
+            this.chapterContent = data;
+          },
+          error: (err) => {
+            this.chapterContent = '';
+            this.showErrorMessage("There was an error fetching Summary. Please try again later.",3000);
+          }
+        });
+      }
   }
 
   onHideDialog() {
@@ -360,14 +379,22 @@ export class SummaryComponent {
     }
   }
 
-  updateSummary() {
+  //This method will be called only for the first time when Chapter dropdown has not been selected.
+  //This is to ensure that previousChapter has been initialized correctly.
+  selectChapter(){
+    this.updateChapterContentOnChapterChange();
+    this.previousChapter = this.selectedChapter;
+    console.log("this.previousChapter = "+this.previousChapter);
+  }
+
+  updateSummaryOnChapterChange() {
+    this.updateChapterContentOnChapterChange();
     if(this.previousChapter == null){
       this.previousChapter = this.selectedChapter;
     }
     if (this.summaryoption != '') {
-      console.log('Generate summary clicked = '+this.generateSummaryClicked);
-      //Check if user has cliked on Generate Summary and if yes ask if he wants to save the changes before changing to another chapter
-      if (this.generateSummaryClicked) {
+      //Check if user has cliked on Generate Summary for any option and if yes ask if he wants to save the changes before changing to another chapter
+      if (this.generateSummary1Clicked || this.generateSummary2Clicked || this.generateSummary3Clicked) {
         this.showConfirmDialogForSummaryChange();
       }
       else{
@@ -377,9 +404,15 @@ export class SummaryComponent {
     }
   }
 
-  resetSummary() {
+  resetGenerateSummaryFlags(){
     //Reset generateSummaryClicked flag and hide dialog
-    this.generateSummaryClicked = false;
+    this.generateSummary1Clicked = false;
+    this.generateSummary2Clicked = false;
+    this.generateSummary3Clicked = false;
+  }
+
+  resetSummary() {
+    this.resetGenerateSummaryFlags();
     // Update the summary for chapter change
     const summary_request_payload = {
       "book_name": this.selectedBook,
@@ -394,8 +427,6 @@ export class SummaryComponent {
       this.fetchAllSummaries(summary_request_payload);
     }
     else {
-      summary_request_payload['doc_id'] =
-        (this.summaryoption == 'summary1' ? this.doc_id_summary_1 : this.doc_id_summary_2);
       this.fetchSavedSummary(summary_request_payload);
     }
   }
@@ -413,19 +444,23 @@ export class SummaryComponent {
       }
     }
 
-    //Flag to track that user clicked on Generate Summary button
-    this.generateSummaryClicked = true;
+    //Flag to track that user clicked on Generate Summary button as per Summary option
+    if(this.summaryoption == 'summary1'){
+      this.generateSummary1Clicked = true;
+    }
+    else if(this.summaryoption == 'summary2'){
+      this.generateSummary2Clicked = true;
+    }
+    else{
+      this.generateSummary3Clicked = true;
+    }
 
     if (this.selectedChapter) {
       this.selectedChapter = this.selectedChapter.replace(" ", "-");
     }
 
-    if (this.chapterContent == '') {
-      this.showChapterContent();
-    }
-    else{
-      this.fetchSummaryFromAI();
-    }
+    this.fetchSummaryFromAI();
+    
   }
 
   fetchSummaryFromAI(){
@@ -502,6 +537,7 @@ export class SummaryComponent {
   errorMessage = "There was an error displaying the Summary information. Please try again later.";
   savedsummary = true;
   chapter_summary = '';
+  
   saveSummary() {
     this.chapter_summary = (this.summaryoption == 'summary1' ? this.summary1value : (this.summaryoption == 'summary2' ? this.summary2value :
       this.summary3value));
@@ -523,6 +559,18 @@ export class SummaryComponent {
       (this.summaryoption == 'summary1' ? this.doc_id_summary_1 :
         (this.summaryoption == 'summary2' ? this.doc_id_summary_2 : this.doc_id_summary_3));
     console.log("Payload = " + JSON.stringify(save_summary_payload));
+    
+    //Reset corresponding generate summary clicked flags
+    if(this.summaryoption == 'summary1'){
+      this.generateSummary1Clicked = false;
+    }
+    else if(this.summaryoption = 'summary2'){
+      this.generateSummary2Clicked = false;
+    }
+    else{
+      this.generateSummary3Clicked = false;
+    }
+
     this.http.post<any>(this.BASE_URL + '/chapter/save', save_summary_payload)
       .subscribe({
         next: (message) => {
@@ -574,17 +622,48 @@ export class SummaryComponent {
     });
   }
 
+  summaryMessagePrefix = '';
+
   showConfirmDialogForSummaryChange(){
+
+    this.summaryMessagePrefix = '';
+    const summaries: string[] = [];
+
+    if (this.generateSummary1Clicked) {
+      summaries.push('Summary 1');
+    }
+    if (this.generateSummary2Clicked) {
+      summaries.push('Summary 2');
+    }
+    if (this.generateSummary3Clicked) {
+      summaries.push('Summary 3');
+    }
+
+    if((this.generateSummary1Clicked && this.generateSummary2Clicked) || (this.generateSummary1Clicked && this.generateSummary3Clicked) || 
+        (this.generateSummary2Clicked && this.generateSummary3Clicked)){
+          this.summaryMessagePrefix = summaries.join(' & ');
+        }
+        else{
+          this.summaryMessagePrefix = summaries.toString();
+        }
+    
     this.confirmationService.confirm({
-     message: 'Summary has been updated for '+this.previousChapter+'. Switching to another Chapter would cause you to lose the updated Summary. '+
-     'Would you like to proceed?',
-     header: 'Confirm Save Summary Update',
+     message: `<p>${this.summaryMessagePrefix} has been updated for <b>${this.previousChapter}</b>.</p>
+              <p>Switching to another Chapter would cause you to lose the updated Summary.</p>
+              <p style="text-align: center; margin-top: 15px; font-weight: bold;">
+                Would you like to proceed?
+              </p>`,
+     header: 'Summary Changed',
      closeOnEscape: false,
      icon: 'pi pi-exclamation-triangle',
      accept: () => 
       {
-        this.generateSummaryClicked = false;
         this.resetSummary(); 
+      },
+      reject: () => 
+      {
+        //Reset to older Chapter value in chapter dropdown.
+        this.selectedChapter = this.previousChapter;
       },
      acceptLabel: 'Proceed',
      rejectLabel: 'Cancel'
