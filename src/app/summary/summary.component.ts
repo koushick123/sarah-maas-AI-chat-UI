@@ -398,11 +398,17 @@ export class SummaryComponent {
         this.showConfirmDialogForSummaryChange();
       }
       else{
-        this.previousChapter = this.selectedChapter;
         this.resetSummary();
       }
     }
   }
+ 
+  updateChapter(newValue: any) {
+    this.updateChapterContentOnChapterChange();
+    this.previousChapter = this.selectedChapter;
+    this.selectedChapter = newValue;
+    console.log('New Chapter = '+this.selectedChapter);
+}
 
   resetGenerateSummaryFlags(){
     //Reset generateSummaryClicked flag and hide dialog
@@ -412,6 +418,7 @@ export class SummaryComponent {
   }
 
   resetSummary() {
+    this.previousChapter = this.selectedChapter;
     this.resetGenerateSummaryFlags();
     // Update the summary for chapter change
     const summary_request_payload = {
@@ -564,7 +571,7 @@ export class SummaryComponent {
     if(this.summaryoption == 'summary1'){
       this.generateSummary1Clicked = false;
     }
-    else if(this.summaryoption = 'summary2'){
+    else if(this.summaryoption == 'summary2'){
       this.generateSummary2Clicked = false;
     }
     else{

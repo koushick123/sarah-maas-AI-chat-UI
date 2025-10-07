@@ -42,7 +42,8 @@
           <!--Chapter List-->
           @if (selectedBook && selectedPart && !selectedChapter) {
           <div class="chapter-row">
-            <p-select [options]="chapters" [(ngModel)]="selectedChapter" placeholder="Select a Chapter" (onChange)="selectChapter()">
+            <p-select [options]="chapters" [(ngModel)]="selectedChapter" placeholder="Select a Chapter" 
+            (ngModelChange)="updateChapter($event)">
             </p-select>
           </div>
           }
