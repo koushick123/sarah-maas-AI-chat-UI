@@ -42,7 +42,7 @@
           <!--Chapter List-->
           @if (selectedBook && selectedPart && !selectedChapter) {
           <div class="chapter-row">
-            <p-select [options]="chapters" [(ngModel)]="selectedChapter" placeholder="Select a Chapter" 
+            <p-select [options]="chapters" [ngModel]="selectedChapter" placeholder="Select a Chapter" 
             (ngModelChange)="updateChapter($event)">
             </p-select>
           </div>
@@ -50,7 +50,7 @@
 
           @if (selectedBook && selectedPart && selectedChapter) {
           <div class="chapter-row-with-button">
-            <p-select [options]="chapters" [(ngModel)]="selectedChapter" (onChange)="updateSummaryOnChapterChange()"
+            <p-select [options]="chapters" [ngModel]="selectedChapter" (ngModelChange)="updateSummaryOnChapterChange($event)"
               placeholder="Select a Chapter">
             </p-select>
 

@@ -387,11 +387,13 @@ export class SummaryComponent {
     console.log("this.previousChapter = "+this.previousChapter);
   }
 
-  updateSummaryOnChapterChange() {
+  updateSummaryOnChapterChange(newValue: any) {
+    this.previousChapter = this.selectedChapter;
+    console.log('Previous Chapter = '+this.selectedChapter);
+    this.selectedChapter = newValue;
+    console.log('New Chapter = '+this.selectedChapter);    
     this.updateChapterContentOnChapterChange();
-    if(this.previousChapter == null){
-      this.previousChapter = this.selectedChapter;
-    }
+
     if (this.summaryoption != '') {
       //Check if user has cliked on Generate Summary for any option and if yes ask if he wants to save the changes before changing to another chapter
       if (this.generateSummary1Clicked || this.generateSummary2Clicked || this.generateSummary3Clicked) {
@@ -557,7 +559,7 @@ export class SummaryComponent {
       "doc_id": "-1"
     };
     if (this.chapter_summary == "No chapter summaries found.") {
-      this.showWarnMessage("No Chapter Summary Found to Save. Please Generate a Summary and click on Save.", 3000);
+      this.showWarnMessage("No Chapter Summary Found to Save. Please Generate a Summary and click on Save Summary.", 3000);
       return;
     }
     this.savedsummary = false;
