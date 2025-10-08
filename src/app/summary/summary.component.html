@@ -32,7 +32,7 @@
             </div>
             }
             @else {
-            <p-select [options]="parts" [(ngModel)]="selectedPart" (onChange)="fetchChapterFromPart()"
+            <p-select [options]="parts" [ngModel]="selectedPart" (ngModelChange)="fetchChapterFromPart($event)"
               placeholder="Select a Part">
             </p-select>
             }
@@ -42,8 +42,8 @@
           <!--Chapter List-->
           @if (selectedBook && selectedPart && !selectedChapter) {
           <div class="chapter-row">
-            <p-select [options]="chapters" [ngModel]="selectedChapter" placeholder="Select a Chapter" 
-            (ngModelChange)="updateChapter($event)">
+            <p-select [options]="chapters" [(ngModel)]="selectedChapter" placeholder="Select a Chapter" 
+            (ngModelChange)="selectChapter()">
             </p-select>
           </div>
           }

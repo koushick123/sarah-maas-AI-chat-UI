@@ -56,7 +56,7 @@ export class SummaryComponent {
   chapterContent: string = '';
   displayDialog: boolean = false;
   part_chapter_map: Map<string, string[]> = new Map();
-  selectedPart: string = '';
+  selectedPart: string | null = '';
   summary1value: string = '';
   summary2value: string = '';
   summary3value: string = '';
@@ -79,6 +79,7 @@ export class SummaryComponent {
   askSummarySave: boolean = false;
   askSummaryVisibility: boolean = false;
   previousChapter: string | null = null;
+  previousPart: string | null = null;
 
   constructor(private http: HttpClient, private messageService: MessageService, private confirmationService: ConfirmationService) { }
 
@@ -102,6 +103,7 @@ export class SummaryComponent {
     this.summary3value = '';
     this.summary1empty = true;
     this.summary2empty = true;
+    this.summary3empty = true;
     this.doc_id_summary_1 = "-1";
     this.doc_id_summary_2 = "-1";
     this.doc_id_summary_3 = "-1";
@@ -109,8 +111,15 @@ export class SummaryComponent {
 
   summary1empty: boolean = true;
   summary2empty: boolean = true;
+  summary3empty: boolean = true;
 
   selectSummaryOption(selectedSummaryOption: string) {
+
+    console.log('Summary option = '+this.summaryoption);
+    console.log('Summary 1 = '+this.summary1empty+" , Value = "+this.summary1value);
+    console.log('Summary 2 = '+this.summary2empty+" , Value = "+this.summary2value);
+    console.log('Summary 3 = '+this.summary3empty+" , Value = "+this.summary3value);
+
     this.summaryoption = selectedSummaryOption;
     this.generatesummary = true;
     this.summary_request_payload = {
@@ -147,20 +156,32 @@ export class SummaryComponent {
       }
     }
     else {
-      if (this.summary1empty || this.summary2empty) {
+      //For Summary 3 , we need to display all summaries.
+      if(this.summary1empty && this.summary2empty && this.summary3empty){
         this.fetchAllSummaries(this.summary_request_payload);
       }
-      else {
-        const summaryNotFound: string = 'No chapter summaries found.';
-        if (this.summary3value == '' || this.summary3value == summaryNotFound) {
-          //To enable spinner to be shown
-          this.summary3value = '';
-          this.summary_request_payload['doc_id'] = this.doc_id_summary_3;
+      else{
+        if (this.summary1empty) {
+          this.summary1value = '';
+          this.summary_request_payload['doc_id'] = this.doc_id_summary_1;
+          this.summary_request_payload['summary_option'] = 'summary1';
           this.fetchSavedSummary(this.summary_request_payload);
         }
-        else {
-          console.log('Doc id for summary 3 - ' + this.doc_id_summary_3);
+        
+        if(this.summary2empty){
+          this.summary2value = '';
+          this.summary_request_payload['doc_id'] = this.doc_id_summary_2;
+          this.summary_request_payload['summary_option'] = 'summary2';
+          this.fetchSavedSummary(this.summary_request_payload);
         }
+        
+        if(this.summary3empty){
+            //To enable spinner to be shown
+            this.summary3value = '';
+            this.summary_request_payload['doc_id'] = this.doc_id_summary_3;
+            this.summary_request_payload['summary_option'] = 'summary3';
+            this.fetchSavedSummary(this.summary_request_payload);
+          }
       }
     }
   }
@@ -209,6 +230,7 @@ export class SummaryComponent {
                   .subscribe({
                     next: (summary) => {
                       this.summary3value = summary['summary'];
+                      this.summary3empty = (this.doc_id_summary_3 == "-1" ? true : false);
                       console.log('Summary 3 :', summary);
                     },
                     error: (err) => {
@@ -247,7 +269,7 @@ export class SummaryComponent {
   }
 
   fetchSavedSummary(summary_request_payload: any) {
-    console.log('summary_request_payload = ' + JSON.stringify(summary_request_payload));
+    console.log('Fetch summary for summary_request_payload = ' + JSON.stringify(summary_request_payload));
     this.generatesummarydisable = true;
     this.savesummarydisable = true;
     this.http.post<any>(this.BASE_URL + '/chapter/summaries', summary_request_payload)
@@ -268,6 +290,7 @@ export class SummaryComponent {
           else {
             this.summary3value = summary['summary'];
             this.doc_id_summary_3 = summary['doc_id']
+            this.summary3empty = (this.doc_id_summary_3 == "-1" ? true : false);
             console.log('Doc id Updated to :', this.doc_id_summary_3);
           }
 
@@ -363,54 +386,116 @@ export class SummaryComponent {
       });
   }
 
-  fetchChapterFromPart() {
-    this.selectedChapter = null;
-    this.summaryoption = '';
-    this.generatesummary = false;
-    this.resetSummaries();
-    if (typeof (this.part_chapter_map.get(this.selectedPart)) != 'undefined') {
-      const chaptersList = this.part_chapter_map.get(this.selectedPart);
-      if (chaptersList) {
-        this.chapters = chaptersList.map(chapter => ({
-          label: chapter,
-          value: chapter
-        }));
-      }
+  fetchChapterFromPart(newPartValue: any) {
+    this.previousPart = this.selectedPart;
+    console.log('New Part = '+newPartValue);
+    console.log('Previous Part = '+this.previousPart);
+    this.selectedPart = newPartValue;
+
+    //Check if user has cliked on Generate Summary for any option and if yes ask if he wants to save the changes before changing to another chapter
+    if (this.generateSummary1Clicked || this.generateSummary2Clicked || this.generateSummary3Clicked) {
+      this.showConfirmDialogForSummaryChangeForPart();
     }
+    else {
+      this.resetSummariesAndUpdateChapterList();
+    }
+  }
+
+  resetSummariesAndUpdateChapterList(){
+    this.selectedChapter = null;
+      this.summaryoption = '';
+      this.generatesummary = false;
+      this.resetSummaries();
+
+      if (this.selectedPart && typeof (this.part_chapter_map.get(this.selectedPart)) != 'undefined') {
+        const chaptersList = this.part_chapter_map.get(this.selectedPart);
+        if (chaptersList) {
+          this.chapters = chaptersList.map(chapter => ({
+            label: chapter,
+            value: chapter
+          }));
+        }
+      }
   }
 
   //This method will be called only for the first time when Chapter dropdown has not been selected.
   //This is to ensure that previousChapter has been initialized correctly.
   selectChapter(){
-    this.updateChapterContentOnChapterChange();
-    this.previousChapter = this.selectedChapter;
-    console.log("this.previousChapter = "+this.previousChapter);
+    if (this.selectedChapter) {
+      this.selChapterWithHyphen = this.selectedChapter;
+      this.url = this.BASE_URL + '/book/' + this.selectedBook + '/chapter/' + this.selChapterWithHyphen.replace(" ", "-") + '/contents';
+        console.log(this.url);
+        this.http.get<string>(this.url)
+          .subscribe({
+            next: (data) => {
+              this.chapterContent = data;
+              this.previousChapter = this.selectedChapter;
+              console.log("this.previousChapter = "+this.previousChapter);    
+            },
+            error: (err) => {
+              this.chapterContent = '';
+              this.showErrorMessage("There was an error fetching Chapter contents. Please try again later.",3000);
+            }
+          });
+      }
   }
 
-  updateSummaryOnChapterChange(newValue: any) {
-    this.previousChapter = this.selectedChapter;
-    console.log('Previous Chapter = '+this.selectedChapter);
-    this.selectedChapter = newValue;
-    console.log('New Chapter = '+this.selectedChapter);    
-    this.updateChapterContentOnChapterChange();
+  updateSummaryOnChapterChange(newChapterValue: string) {
+    
+    if (newChapterValue && this.selectedChapter != newChapterValue) {
+      this.selChapterWithHyphen = newChapterValue;
+      this.url = this.BASE_URL + '/book/' + this.selectedBook + '/chapter/' + this.selChapterWithHyphen.replace(" ", "-") + '/contents';
+        console.log(this.url);
+        this.http.get<string>(this.url)
+          .subscribe({
+            next: (data) => {
+              this.chapterContent = data;
+              
+              this.previousChapter = this.selectedChapter;
+              console.log('Previous Chapter = '+this.selectedChapter);
+              this.selectedChapter = newChapterValue;
+              console.log('New Chapter = '+this.selectedChapter);    
+              
 
-    if (this.summaryoption != '') {
-      //Check if user has cliked on Generate Summary for any option and if yes ask if he wants to save the changes before changing to another chapter
-      if (this.generateSummary1Clicked || this.generateSummary2Clicked || this.generateSummary3Clicked) {
-        this.showConfirmDialogForSummaryChange();
-      }
-      else{
-        this.resetSummary();
-      }
+              if (this.summaryoption != '') {
+                //Check if user has cliked on Generate Summary for any option and if yes ask if he wants to save the changes before changing to another chapter
+                if (this.generateSummary1Clicked || this.generateSummary2Clicked || this.generateSummary3Clicked) {
+                  this.showConfirmDialogForSummaryChangeForChapter();
+                }
+                else{
+                  this.resetSummary();
+                }
+              }
+            },
+            error: (err) => {
+              this.chapterContent = '';
+              this.showErrorMessage("There was an error fetching Chapter contents. Please try again later.",3000);
+            }
+          });
     }
+    
   }
  
   updateChapter(newValue: any) {
-    this.updateChapterContentOnChapterChange();
-    this.previousChapter = this.selectedChapter;
-    this.selectedChapter = newValue;
-    console.log('New Chapter = '+this.selectedChapter);
-}
+    if (this.selectedChapter && this.previousChapter != newValue) {
+      this.selChapterWithHyphen = this.selectedChapter;
+      this.url = this.BASE_URL + '/book/' + this.selectedBook + '/chapter/' + this.selChapterWithHyphen.replace(" ", "-") + '/contents';
+        console.log(this.url);
+        this.http.get<string>(this.url)
+          .subscribe({
+            next: (data) => {
+              this.chapterContent = data;
+              this.previousChapter = this.selectedChapter;
+              this.selectedChapter = newValue;
+              console.log('New Chapter = '+this.selectedChapter);
+            },
+            error: (err) => {
+              this.chapterContent = '';
+              this.showErrorMessage("There was an error fetching Chapter contents. Please try again later.",3000);
+            }
+          });
+      }
+  }
 
   resetGenerateSummaryFlags(){
     //Reset generateSummaryClicked flag and hide dialog
@@ -501,8 +586,9 @@ export class SummaryComponent {
     else {
       this.summary3value = '';
       this.summary_display_text = 'Summary 3';
+      this.summary3empty = true;
     }
-    console.log('Payload for generate summary = '+JSON.stringify(summary_request_payload));
+    console.log('summary_request_payload for fetch summary from AI = '+summary_request_payload['chapter_content'].substring(0,20))
     this.http.post<string>(this.BASE_URL + '/chapter/summary', summary_request_payload)
       .subscribe({
         next: (summary) => {
@@ -516,6 +602,7 @@ export class SummaryComponent {
           }
           else {
             this.summary3value = summary;
+            this.summary3empty = true;
           }
           if (this.selectedChapter) {
             this.selectedChapter = this.selectedChapter.replace("-", " ");
@@ -632,8 +719,10 @@ export class SummaryComponent {
   }
 
   summaryMessagePrefix = '';
+  messageWord = '';
+  messageBody = '';
 
-  showConfirmDialogForSummaryChange(){
+  setSummaryMessagePrefix() {
 
     this.summaryMessagePrefix = '';
     const summaries: string[] = [];
@@ -655,27 +744,63 @@ export class SummaryComponent {
         else{
           this.summaryMessagePrefix = summaries.toString();
         }
-    
-    this.confirmationService.confirm({
-     message: `<p>${this.summaryMessagePrefix} has been updated for <b>${this.previousChapter}</b>.</p>
-              <p>Switching to another Chapter would cause you to lose the updated Summary.</p>
+  }
+
+  selectWording(selectionLevel: number){
+    if(selectionLevel == 1){
+      return "Chapter";
+    }
+    else if(selectionLevel == 2){
+      return "Part"
+    }
+    else{
+      return "Book"
+    }
+  }
+
+  setDialogOptions(selectionLevel: number){
+    this.setSummaryMessagePrefix();
+    this.messageWord = this.selectWording(selectionLevel);
+    this.messageBody = `<p>${this.summaryMessagePrefix} has been updated for <b>${this.previousChapter}</b>.</p>
+              <p>Switching to another ${this.messageWord} would cause you to lose the updated Summary.</p>
               <p style="text-align: center; margin-top: 15px; font-weight: bold;">
                 Would you like to proceed?
-              </p>`,
-     header: 'Summary Changed',
-     closeOnEscape: false,
-     icon: 'pi pi-exclamation-triangle',
-     accept: () => 
-      {
-        this.resetSummary(); 
-      },
-      reject: () => 
-      {
-        //Reset to older Chapter value in chapter dropdown.
-        this.selectedChapter = this.previousChapter;
-      },
-     acceptLabel: 'Proceed',
-     rejectLabel: 'Cancel'
+              </p>`
+  }
+
+  showConfirmDialogForSummaryChangeForChapter(){    
+    this.setDialogOptions(1);
+    this.confirmationService.confirm({
+    message: this.messageBody,
+    header: 'Summary Changed',
+    closeOnEscape: false,
+    icon: 'pi pi-exclamation-triangle',
+    accept: () => 
+    {
+      this.resetSummary(); 
+    },
+    reject: () => 
+    {
+      //Reset to older Chapter value in chapter dropdown.
+      this.selectedChapter = this.previousChapter;
+    }
    });
+  }
+
+  showConfirmDialogForSummaryChangeForPart(){
+      this.setDialogOptions(2);
+      this.confirmationService.confirm({
+        message: this.messageBody,
+        header: 'Summary Changed',
+        closeOnEscape: false,
+        icon: 'pi pi-exclamation-triangle',
+        accept: () => {
+          this.resetSummariesAndUpdateChapterList();
+        },
+        reject: () => {
+          //Reset to older Part value in Part dropdown.
+          this.selectedPart = this.previousPart;
+        }
+    });
   }
 }
