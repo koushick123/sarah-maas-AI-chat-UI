@@ -10,7 +10,7 @@
   <div [align]="'center'">
     <!-- Chapter selection -->
     <div class="chapter-col">
-      <p-select [options]="books" [(ngModel)]="selectedBook" placeholder="Select a Book" (onChange)="onBookChange()">
+      <p-select [options]="books" [ngModel]="selectedBook" placeholder="Select a Book" (ngModelChange)="onBookChange($event)">
       </p-select>
     </div>
 
@@ -55,7 +55,7 @@
             </p-select>
 
             <p-button [raised]="true" label="Show Entire Chapter" icon="pi pi-book"
-              (onClick)="fetchChapterContent(selectedChapter)">
+              (onClick)="fetchChapterContent()">
             </p-button>
           </div>
           }

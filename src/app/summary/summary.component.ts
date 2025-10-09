@@ -80,20 +80,41 @@ export class SummaryComponent {
   askSummaryVisibility: boolean = false;
   previousChapter: string | null = null;
   previousPart: string | null = null;
+  previousBook: string | null = null;
 
   constructor(private http: HttpClient, private messageService: MessageService, private confirmationService: ConfirmationService) { }
 
-  onBookChange() {
-    if (this.selectedBook !== null) {
-      this.selectedChapter = null;
-      this.selectedPart = '';
-      this.summaryoption = '';
-      this.generatesummary = false;
-      this.fetchChapterNames();
-      this.resetSummaries();
+  onBookChange(newBookValue: string) {
+    if (newBookValue) {
+      if(this.selectedBook){
+        this.previousBook = this.selectedBook;
+      }
+      else{
+        //Applicable only for the first time
+        this.previousBook = newBookValue;
+      }
+      this.selectedBook = newBookValue;
+      console.log('Previous Book = '+this.previousBook);
+      console.log('New Book = '+this.selectedBook);
+      if(this.hasAnySummaryBeenUpdated()){
+        this.showConfirmDialogForSummaryChangeForBook();
+      }
+      else{
+        this.resetSummariesAndPartsAndFetchChapterNames();
+      }
     } else {
       this.chapters = [];
     }
+  }
+
+  resetSummariesAndPartsAndFetchChapterNames(){
+    this.resetGenerateSummaryFlags();
+    this.selectedChapter = null;
+    this.selectedPart = '';
+    this.summaryoption = '';
+    this.generatesummary = false;
+    this.resetSummaries();
+    this.fetchChapterNames();
   }
 
   //Call this for change in book or part, do ensure all summaries are being refreshed.
@@ -277,19 +298,19 @@ export class SummaryComponent {
         next: (summary) => {
           if (this.summaryoption == 'summary1') {
             this.summary1value = summary['summary'];
-            this.doc_id_summary_1 = summary['doc_id']
+            this.doc_id_summary_1 = summary['doc_id'];
             this.summary1empty = (this.doc_id_summary_1 == "-1" ? true : false);
             console.log('Doc id Updated to :', this.doc_id_summary_1);
           }
           else if (this.summaryoption == 'summary2') {
             this.summary2value = summary['summary'];
-            this.doc_id_summary_2 = summary['doc_id']
+            this.doc_id_summary_2 = summary['doc_id'];
             this.summary2empty = (this.doc_id_summary_2 == "-1" ? true : false);
             console.log('Doc id Updated to :', this.doc_id_summary_2);
           }
           else {
             this.summary3value = summary['summary'];
-            this.doc_id_summary_3 = summary['doc_id']
+            this.doc_id_summary_3 = summary['doc_id'];
             this.summary3empty = (this.doc_id_summary_3 == "-1" ? true : false);
             console.log('Doc id Updated to :', this.doc_id_summary_3);
           }
@@ -314,7 +335,7 @@ export class SummaryComponent {
       });
   }
 
-  fetchChapterContent(selChapter: string) {
+  fetchChapterContent() {
     this.displayDialog = true;
     this.chapterContent = '';
     this.showChapterContent();
@@ -393,12 +414,16 @@ export class SummaryComponent {
     this.selectedPart = newPartValue;
 
     //Check if user has cliked on Generate Summary for any option and if yes ask if he wants to save the changes before changing to another chapter
-    if (this.generateSummary1Clicked || this.generateSummary2Clicked || this.generateSummary3Clicked) {
+    if (this.hasAnySummaryBeenUpdated()) {
       this.showConfirmDialogForSummaryChangeForPart();
     }
     else {
       this.resetSummariesAndUpdateChapterList();
     }
+  }
+
+  hasAnySummaryBeenUpdated(){
+    return (this.generateSummary1Clicked || this.generateSummary2Clicked || this.generateSummary3Clicked);
   }
 
   resetSummariesAndUpdateChapterList(){
@@ -460,7 +485,7 @@ export class SummaryComponent {
 
               if (this.summaryoption != '') {
                 //Check if user has cliked on Generate Summary for any option and if yes ask if he wants to save the changes before changing to another chapter
-                if (this.generateSummary1Clicked || this.generateSummary2Clicked || this.generateSummary3Clicked) {
+                if (this.hasAnySummaryBeenUpdated()) {
                   this.showConfirmDialogForSummaryChangeForChapter();
                 }
                 else{
@@ -784,7 +809,9 @@ export class SummaryComponent {
     {
       //Reset to older Chapter value in chapter dropdown.
       this.selectedChapter = this.previousChapter;
-    }
+    },
+    acceptLabel: 'Proceed',
+    rejectLabel: 'Cancel'
    });
   }
 
@@ -801,7 +828,28 @@ export class SummaryComponent {
         reject: () => {
           //Reset to older Part value in Part dropdown.
           this.selectedPart = this.previousPart;
-        }
+        },
+        acceptLabel: 'Proceed',
+        rejectLabel: 'Cancel'
+    });
+  }
+
+  showConfirmDialogForSummaryChangeForBook(){
+      this.setDialogOptions(3);
+      this.confirmationService.confirm({
+        message: this.messageBody,
+        header: 'Summary Changed',
+        closeOnEscape: false,
+        icon: 'pi pi-exclamation-triangle',
+        accept: () => {
+          this.resetSummariesAndPartsAndFetchChapterNames();
+        },
+        reject: () => {
+          //Reset to older Book value in Book dropdown.
+          this.selectedBook = this.previousBook;
+        },
+        acceptLabel: 'Proceed',
+        rejectLabel: 'Cancel'
     });
   }
 }
