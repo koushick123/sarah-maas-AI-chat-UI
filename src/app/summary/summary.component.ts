@@ -402,6 +402,7 @@ export class SummaryComponent {
   }
 
   resetSummariesAndUpdateChapterList(){
+    this.resetGenerateSummaryFlags();
     this.selectedChapter = null;
       this.summaryoption = '';
       this.generatesummary = false;

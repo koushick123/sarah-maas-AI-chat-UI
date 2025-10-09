@@ -64,7 +64,7 @@ html, body {
   display: flex;
   flex-direction: column;
   justify-self: center;
-  width: 40%;
+  width: 25%;
   /* Black background */
   color: #eee;
   /* Light text for contrast */
