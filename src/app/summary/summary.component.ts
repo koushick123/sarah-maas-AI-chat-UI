@@ -40,6 +40,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
   templateUrl: './summary.component.html',
   styleUrls: ['./summary.component.css']
 })
+
 export class SummaryComponent {
   books = [
     { label: 'Select a Book', value: null },
@@ -97,7 +98,7 @@ export class SummaryComponent {
       console.log('Previous Book = '+this.previousBook);
       console.log('New Book = '+this.selectedBook);
       if(this.hasAnySummaryBeenUpdated()){
-        this.showConfirmDialogForSummaryChangeForBook();
+        this.showConfirmDialog(SELECTION_LEVEL.BOOK);
       }
       else{
         this.resetSummariesAndPartsAndFetchChapterNames();
@@ -415,7 +416,7 @@ export class SummaryComponent {
 
     //Check if user has cliked on Generate Summary for any option and if yes ask if he wants to save the changes before changing to another chapter
     if (this.hasAnySummaryBeenUpdated()) {
-      this.showConfirmDialogForSummaryChangeForPart();
+      this.showConfirmDialog(SELECTION_LEVEL.PART);
     }
     else {
       this.resetSummariesAndUpdateChapterList();
@@ -486,7 +487,7 @@ export class SummaryComponent {
               if (this.summaryoption != '') {
                 //Check if user has cliked on Generate Summary for any option and if yes ask if he wants to save the changes before changing to another chapter
                 if (this.hasAnySummaryBeenUpdated()) {
-                  this.showConfirmDialogForSummaryChangeForChapter();
+                  this.showConfirmDialog(SELECTION_LEVEL.CHAPTER);
                 }
                 else{
                   this.resetSummary();
@@ -794,8 +795,8 @@ export class SummaryComponent {
               </p>`
   }
 
-  showConfirmDialogForSummaryChangeForChapter(){    
-    this.setDialogOptions(1);
+  showConfirmDialog(selectionLevel: number){
+    this.setDialogOptions(selectionLevel);
     this.confirmationService.confirm({
     message: this.messageBody,
     header: 'Summary Changed',
@@ -803,53 +804,39 @@ export class SummaryComponent {
     icon: 'pi pi-exclamation-triangle',
     accept: () => 
     {
-      this.resetSummary(); 
+      if(selectionLevel == 1){
+        this.resetSummary();
+      }
+      else if(selectionLevel == 2){
+        this.resetSummariesAndUpdateChapterList();
+      }
+      else{
+        this.resetSummariesAndPartsAndFetchChapterNames();
+      }
     },
     reject: () => 
     {
-      //Reset to older Chapter value in chapter dropdown.
-      this.selectedChapter = this.previousChapter;
+      if(selectionLevel == SELECTION_LEVEL.CHAPTER){
+        //Reset to older Chapter value in chapter dropdown.
+        this.selectedChapter = this.previousChapter;
+      }
+      else if(selectionLevel == SELECTION_LEVEL.PART){
+        //Reset to older Part value in Part dropdown.
+        this.selectedPart = this.previousPart;
+      }
+      else{
+        //Reset to older Book value in Book dropdown.
+        this.selectedBook = this.previousBook;
+      }
     },
     acceptLabel: 'Proceed',
     rejectLabel: 'Cancel'
    });
   }
-
-  showConfirmDialogForSummaryChangeForPart(){
-      this.setDialogOptions(2);
-      this.confirmationService.confirm({
-        message: this.messageBody,
-        header: 'Summary Changed',
-        closeOnEscape: false,
-        icon: 'pi pi-exclamation-triangle',
-        accept: () => {
-          this.resetSummariesAndUpdateChapterList();
-        },
-        reject: () => {
-          //Reset to older Part value in Part dropdown.
-          this.selectedPart = this.previousPart;
-        },
-        acceptLabel: 'Proceed',
-        rejectLabel: 'Cancel'
-    });
-  }
-
-  showConfirmDialogForSummaryChangeForBook(){
-      this.setDialogOptions(3);
-      this.confirmationService.confirm({
-        message: this.messageBody,
-        header: 'Summary Changed',
-        closeOnEscape: false,
-        icon: 'pi pi-exclamation-triangle',
-        accept: () => {
-          this.resetSummariesAndPartsAndFetchChapterNames();
-        },
-        reject: () => {
-          //Reset to older Book value in Book dropdown.
-          this.selectedBook = this.previousBook;
-        },
-        acceptLabel: 'Proceed',
-        rejectLabel: 'Cancel'
-    });
-  }
 }
+
+enum SELECTION_LEVEL
+{
+  BOOK = 3, CHAPTER = 1, PART = 2
+}
+
